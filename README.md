@@ -52,7 +52,7 @@ The Android app wraps the same static site with [Capacitor](https://capacitorjs.
 
 - The **Android** GitHub Action builds a debug APK on every push. Download it from the run's artifacts. Pushing a tag such as `v1.0.0` also attaches the APK to a GitHub release.
 - Locally, with Android Studio installed: `npm run android`.
-- Icons and splash screens come from `resources/` (`python3 scripts/make-icons.py`, then `npx @capacitor/assets generate --android`).
+- Icons and splash screens come from `resources/` (`npx tsx scripts/make-icons.ts` draws every icon, splash screen and store graphic from the SVG artwork in `lib/art.ts`, straight into `android/`, `public/`, `app/` and `resources/`).
 
 ### Google Play bundle
 
