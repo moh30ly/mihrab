@@ -6,6 +6,7 @@ import { QuranSources } from "@/components/quran/quran-sources"
 import { SurahReader } from "@/components/quran/surah-reader"
 import { loadSurahVerses } from "@/lib/quran"
 import { SURAHS, surahById } from "@/lib/quran-index"
+import { T } from "@/lib/i18n"
 
 export const dynamicParams = false
 
@@ -39,12 +40,13 @@ export default async function SurahPage({ params }: PageProps<"/quran/[surah]">)
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 pt-6 pb-12 sm:px-6">
       <Link href="/quran/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-grove">
-        <ChevronLeft className="size-4" aria-hidden /> All surahs
+        <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden /> <T k="All surahs" />
       </Link>
 
       <header className="arch-panel mt-4 px-6 pt-10 pb-7 text-center">
         <p className="text-xs tracking-wide text-brass-bright uppercase">
-          Surah {info.id} · {info.verses} ayahs · {info.type === "meccan" ? "Makki" : "Madani"}
+          <T k="Surah {n}" vars={{ n: info.id }} /> · <T k="{n} ayahs" vars={{ n: info.verses }} /> ·{" "}
+          <T k={info.type === "meccan" ? "Makki" : "Madani"} />
         </p>
         <h1 className="mt-2">
           <span lang="ar" dir="rtl" className="block font-quran text-5xl leading-snug">
@@ -59,7 +61,7 @@ export default async function SurahPage({ params }: PageProps<"/quran/[surah]">)
 
       <SurahReader surahId={id} verses={verses} bismillah={showBismillah ? BISMILLAH : null} />
 
-      <nav aria-label="Surahs" className="mt-8 flex items-center justify-between gap-3">
+      <nav aria-label="Surahs" dir="ltr" className="mt-8 flex items-center justify-between gap-3">
         {prev ? (
           <Link href={`/quran/${prev.id}/`} className="inline-flex h-11 items-center gap-1 rounded-full border border-border bg-card px-4 text-sm">
             <ChevronLeft className="size-4" aria-hidden /> {prev.transliteration}

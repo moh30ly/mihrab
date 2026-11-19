@@ -5,6 +5,7 @@
 import { Capacitor } from "@capacitor/core"
 import { extraEventsForDay, zakatEvent, type ExtraKey } from "@/lib/extra-reminders"
 import { formatPrayerTime } from "@/lib/format"
+import { tNow } from "@/lib/i18n/translate"
 import { PRAYER_INFO } from "@/lib/methods"
 import { dayTimes, timesAreOrdered, validDate } from "@/lib/prayer"
 import { OBLIGATORY_KEYS, type Place, type Settings } from "@/lib/types"
@@ -45,7 +46,7 @@ export function buildNativeReminders(place: Place, settings: Settings, now = new
     OBLIGATORY_KEYS.forEach((key, prayerIndex) => {
       const at = times[key]
       if (!settings.prayers[key] || !validDate(at)) return
-      const name = PRAYER_INFO[key].name
+      const name = tNow(PRAYER_INFO[key].name)
       const when = formatPrayerTime(at, place.timezone)
       leads.forEach((lead) => {
         const fireAt = new Date(at.getTime() - lead * 60_000)
@@ -53,8 +54,8 @@ export function buildNativeReminders(place: Place, settings: Settings, now = new
         out.push({
           id: 1000 + day * 100 + prayerIndex * 10 + (lead === 0 ? 0 : 1),
           at: fireAt,
-          title: lead === 0 ? `It's time for ${name}` : `${name} in ${lead} minutes`,
-          body: `${name} at ${when} · ${place.label}`,
+          title: lead === 0 ? tNow("It's time for {name}", { name }) : tNow("{name} in {n} minutes", { name, n: lead }),
+          body: tNow("{name} at {time} · {place}", { name, time: when, place: place.label }),
         })
       })
     })

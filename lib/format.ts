@@ -1,5 +1,8 @@
+import { tNow } from "@/lib/i18n/translate"
+import { intlLocale } from "@/lib/i18n/store"
+
 export function formatClock(instant: Date, timeZone: string, withSeconds = false) {
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(intlLocale(), {
     timeZone,
     hour: "numeric",
     minute: "2-digit",
@@ -13,7 +16,7 @@ export function formatPrayerTime(date: Date, timeZone: string) {
 }
 
 export function formatGregorian(instant: Date, timeZone: string) {
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(intlLocale(), {
     timeZone,
     weekday: "long",
     month: "long",
@@ -29,10 +32,14 @@ export function formatHijri(instant: Date, timeZone: string) {
     month: "long",
     year: "numeric",
   }
+  // Keep any numbering system from the locale (Arabic uses Latin digits), and add the Hijri calendar.
+  const [base, ext] = intlLocale().split("-u-")
+  const numbering = ext?.match(/nu-\w+/)?.[0]
+  const tag = (calendar: string) => `${base}-u-ca-${calendar}${numbering ? `-${numbering}` : ""}`
   try {
-    return new Intl.DateTimeFormat("en-US-u-ca-islamic-umalqura", options).format(instant)
+    return new Intl.DateTimeFormat(tag("islamic-umalqura"), options).format(instant)
   } catch {
-    return new Intl.DateTimeFormat("en-US-u-ca-islamic", options).format(instant)
+    return new Intl.DateTimeFormat(tag("islamic"), options).format(instant)
   }
 }
 
@@ -76,32 +83,26 @@ export function formatPopulation(population: number) {
   if (population >= 1_000_000) {
     const millions = population / 1_000_000
     const digits = millions >= 10 ? 0 : 1
-    return `${millions.toFixed(digits)} million`
+    return tNow("{n} million", { n: millions.toFixed(digits) })
   }
-  if (population >= 100_000) return `${Math.round(population / 1000)} thousand`
+  if (population >= 100_000) return tNow("{n} thousand", { n: Math.round(population / 1000) })
   return ""
 }
 
 export function formatRemaining(ms: number) {
-  if (ms <= 0) return "now"
+  if (ms <= 0) return tNow("now")
   const totalSeconds = Math.floor(ms / 1000)
-  if (totalSeconds < 60) {
-    return totalSeconds === 1 ? "in 1 second" : `in ${totalSeconds} seconds`
-  }
+  if (totalSeconds < 60) return tNow("in {n} s", { n: totalSeconds })
   const totalMinutes = Math.floor(totalSeconds / 60)
-  if (totalMinutes < 60) {
-    return totalMinutes === 1 ? "in 1 minute" : `in ${totalMinutes} minutes`
-  }
+  if (totalMinutes < 60) return tNow("in {n} min", { n: totalMinutes })
   const hours = Math.floor(totalMinutes / 60)
   const minutes = totalMinutes % 60
-  const hourLabel = hours === 1 ? "1 hour" : `${hours} hours`
-  if (minutes === 0) return `in ${hourLabel}`
-  const minuteLabel = minutes === 1 ? "1 minute" : `${minutes} minutes`
-  return `in ${hourLabel} ${minuteLabel}`
+  if (minutes === 0) return tNow("in {h} h", { h: hours })
+  return tNow("in {h} h {m} min", { h: hours, m: minutes })
 }
 
 export function formatRemainingShort(ms: number) {
-  if (ms <= 0) return "now"
+  if (ms <= 0) return tNow("now")
   const totalMinutes = Math.ceil(ms / 60000)
   if (totalMinutes < 60) return `${totalMinutes}m`
   const hours = Math.floor(totalMinutes / 60)

@@ -13,6 +13,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import { useT } from "@/lib/i18n"
 
 export function CalculationSheet({
   open,
@@ -27,6 +28,7 @@ export function CalculationSheet({
   place: Place | null
   onChange: (settings: Settings) => void
 }) {
+  const { t } = useT()
   const suggestion = place?.country ? suggestForCountry(place.country) : null
   const usingSuggestion =
     suggestion != null &&
@@ -49,21 +51,20 @@ export function CalculationSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto rounded-t-[1.75rem]">
         <SheetHeader>
-          <SheetTitle className="font-display text-2xl">Calculation</SheetTitle>
+          <SheetTitle className="font-display text-2xl">{t("Calculation")}</SheetTitle>
           <SheetDescription>
-            Methods differ by the sun angles for Fajr and Isha, and by when Asr begins.
+            {t("Methods differ by the sun angles for Fajr and Isha, and by when Asr begins.")}
           </SheetDescription>
         </SheetHeader>
         <div className="grid gap-6 px-4 pb-6">
           {suggestion && place?.countryName && (
             <div className="rounded-2xl bg-accent px-4 py-3 text-sm leading-6">
               {usingSuggestion ? (
-                <p>Suggested for {place.countryName}: {methodById(suggestion.method).name}, {suggestion.madhab === "hanafi" ? "Hanafi" : "standard"} Asr.</p>
+                <p>{t("Suggested for {country}: {method}, {madhab} Asr.", { country: place.countryName, method: t(methodById(suggestion.method).name), madhab: suggestion.madhab === "hanafi" ? t("Hanafi") : t("standard") })}</p>
               ) : (
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p>
-                    Suggested for {place.countryName}: {methodById(suggestion.method).name},{" "}
-                    {suggestion.madhab === "hanafi" ? "Hanafi" : "standard"} Asr.
+                    {t("Suggested for {country}: {method}, {madhab} Asr.", { country: place.countryName, method: t(methodById(suggestion.method).name), madhab: suggestion.madhab === "hanafi" ? t("Hanafi") : t("standard") })}
                   </p>
                   <Button
                     type="button"
@@ -79,7 +80,7 @@ export function CalculationSheet({
                       })
                     }
                   >
-                    Use suggestion
+                    {t("Use suggestion")}
                   </Button>
                 </div>
               )}
@@ -87,7 +88,7 @@ export function CalculationSheet({
           )}
 
           <fieldset className="grid gap-2">
-            <legend className="mb-1 font-medium">Method</legend>
+            <legend className="mb-1 font-medium">{t("Method")}</legend>
             {METHODS.map((method) => (
               <label
                 key={method.id}
@@ -104,8 +105,8 @@ export function CalculationSheet({
                   onChange={() => onChange({ ...settings, method: method.id, methodCustom: true })}
                 />
                 <span>
-                  <span className="block font-medium">{method.name}</span>
-                  <span className="block text-sm leading-5 text-muted-foreground">{method.detail}</span>
+                  <span className="block font-medium">{t(method.name)}</span>
+                  <span className="block text-sm leading-5 text-muted-foreground">{t(method.detail)}</span>
                 </span>
               </label>
             ))}
@@ -129,17 +130,17 @@ export function CalculationSheet({
                   onChange={() => onChange({ ...settings, madhab: madhab.id, madhabCustom: true })}
                 />
                 <span>
-                  <span className="block font-medium">{madhab.name}</span>
-                  <span className="block text-sm leading-5 text-muted-foreground">{madhab.detail}</span>
+                  <span className="block font-medium">{t(madhab.name)}</span>
+                  <span className="block text-sm leading-5 text-muted-foreground">{t(madhab.detail)}</span>
                 </span>
               </label>
             ))}
           </fieldset>
 
           <fieldset className="grid gap-2">
-            <legend className="mb-1 font-medium">High latitudes</legend>
+            <legend className="mb-1 font-medium">{t("High latitudes")}</legend>
             <p className="text-sm leading-6 text-muted-foreground">
-              This changes Fajr and Isha where twilight lasts through the night. Inside the polar circles, Mihrab uses the nearest latitude that still has a normal sunrise and sunset.
+              {t("This changes Fajr and Isha where twilight lasts through the night. Inside the polar circles, Mihrab uses the nearest latitude that still has a normal sunrise and sunset.")}
             </p>
             {HIGH_LATITUDES.map((rule) => (
               <label
@@ -157,8 +158,8 @@ export function CalculationSheet({
                   onChange={() => onChange({ ...settings, highLatitude: rule.id })}
                 />
                 <span>
-                  <span className="block font-medium">{rule.name}</span>
-                  <span className="block text-sm leading-5 text-muted-foreground">{rule.detail}</span>
+                  <span className="block font-medium">{t(rule.name)}</span>
+                  <span className="block text-sm leading-5 text-muted-foreground">{t(rule.detail)}</span>
                 </span>
               </label>
             ))}
@@ -167,9 +168,9 @@ export function CalculationSheet({
           <div className="grid gap-3">
             <div className="flex items-end justify-between gap-3">
               <div>
-                <Label>Match a mosque timetable</Label>
+                <Label>{t("Match a mosque timetable")}</Label>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Positive minutes move a time later. Each step is one minute, up to 45.
+                  {t("Positive minutes move a time later. Each step is one minute, up to 45.")}
                 </p>
               </div>
               <Button
@@ -182,18 +183,18 @@ export function CalculationSheet({
                   })
                 }
               >
-                Reset
+                {t("Reset")}
               </Button>
             </div>
             {PRAYER_KEYS.map((key) => (
               <div key={key} className="flex items-center justify-between gap-3 border-b border-border py-2">
-                <span className="font-medium">{PRAYER_INFO[key].name}</span>
+                <span className="font-medium">{t(PRAYER_INFO[key].name)}</span>
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    aria-label={`${PRAYER_INFO[key].name} one minute earlier`}
+                    aria-label={t("{name} one minute earlier", { name: t(PRAYER_INFO[key].name) })}
                     onClick={() => bump(key, -1)}
                   >
                     −
@@ -205,7 +206,7 @@ export function CalculationSheet({
                     type="button"
                     variant="outline"
                     size="icon"
-                    aria-label={`${PRAYER_INFO[key].name} one minute later`}
+                    aria-label={t("{name} one minute later", { name: t(PRAYER_INFO[key].name) })}
                     onClick={() => bump(key, 1)}
                   >
                     +

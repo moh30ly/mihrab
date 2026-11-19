@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { LAST_READ_KEY, type SurahInfo } from "@/lib/quran-index"
+import { useT } from "@/lib/i18n"
 
 type LastRead = { surah: number; ayah: number }
 
@@ -29,6 +30,7 @@ function normalize(value: string) {
 }
 
 export function SurahList({ surahs }: { surahs: SurahInfo[] }) {
+  const { t } = useT()
   const [query, setQuery] = useState("")
   const rawLast = useSyncExternalStore(subscribe, readLastRead, () => null)
   const last = useMemo<LastRead | null>(() => {
@@ -63,9 +65,9 @@ export function SurahList({ surahs }: { surahs: SurahInfo[] }) {
           className="arch-panel mb-6 flex items-center justify-between gap-4 px-6 py-5 !rounded-[1.5rem]"
         >
           <span>
-            <span className="block text-xs tracking-wide text-brass-bright uppercase">Continue reading</span>
+            <span className="block text-xs tracking-wide text-brass-bright uppercase">{t("Continue reading")}</span>
             <span className="font-heading text-2xl">
-              {lastSurah.transliteration}, ayah {last.ayah}
+              {t("{surah}, ayah {n}", { surah: lastSurah.transliteration, n: last.ayah })}
             </span>
           </span>
           <span lang="ar" dir="rtl" className="font-quran text-3xl">
@@ -75,14 +77,14 @@ export function SurahList({ surahs }: { surahs: SurahInfo[] }) {
       ) : null}
 
       <label className="relative block">
-        <span className="sr-only">Search surahs</span>
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+        <span className="sr-only">{t("Search surahs")}</span>
+        <Search className="pointer-events-none absolute top-1/2 start-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <Input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name, meaning, or number"
-          className="h-12 rounded-full bg-card pl-10 text-base"
+          placeholder={t("Search by name, meaning, or number")}
+          className="h-12 rounded-full bg-card ps-10 text-base"
         />
       </label>
 
@@ -99,7 +101,7 @@ export function SurahList({ surahs }: { surahs: SurahInfo[] }) {
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-medium text-ink">{s.transliteration}</span>
                 <span className="block truncate text-xs text-muted-foreground">
-                  {s.translation} · {s.verses} ayahs · {s.type === "meccan" ? "Makki" : "Madani"}
+                  {s.translation} · {t("{n} ayahs", { n: s.verses })} · {s.type === "meccan" ? t("Makki") : t("Madani")}
                 </span>
               </span>
               <span lang="ar" dir="rtl" className="shrink-0 font-quran text-xl text-grove">
@@ -110,7 +112,7 @@ export function SurahList({ surahs }: { surahs: SurahInfo[] }) {
         ))}
       </ol>
       {filtered.length === 0 ? (
-        <p className="mt-6 text-sm text-muted-foreground">No surah matches “{query}”.</p>
+        <p className="mt-6 text-sm text-muted-foreground">{t("No surah matches “{query}”.", { query })}</p>
       ) : null}
     </div>
   )

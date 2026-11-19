@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { RotateCcw, Sun, Sunset } from "lucide-react"
 import type { Dhikr } from "@/lib/athkar"
 import { cn } from "@/lib/utils"
+import { useT } from "@/lib/i18n"
 
 type Period = "morning" | "evening"
 
@@ -29,6 +30,7 @@ function saveProgress(period: Period, value: Record<number, number>) {
 }
 
 export function AthkarReader({ morning, evening }: { morning: Dhikr[]; evening: Dhikr[] }) {
+  const { t } = useT()
   const [period, setPeriod] = useState<Period>("morning")
   const [done, setDone] = useState<Record<number, number>>({})
   const [showEnglish, setShowEnglish] = useState(true)
@@ -63,7 +65,7 @@ export function AthkarReader({ morning, evening }: { morning: Dhikr[]; evening: 
   return (
     <div className="mt-6">
       <div className="sticky top-14 z-20 flex flex-wrap items-center justify-between gap-2 rounded-[1.5rem] border border-border bg-card/95 p-1.5 backdrop-blur">
-        <div role="tablist" aria-label="Morning or evening" className="flex gap-1">
+        <div role="tablist" aria-label={t("Morning or evening")} className="flex gap-1">
           {(
             [
               ["morning", "Morning", "الصباح", Sun],
@@ -82,7 +84,7 @@ export function AthkarReader({ morning, evening }: { morning: Dhikr[]; evening: 
               )}
             >
               <Icon className="size-4" aria-hidden />
-              {label}
+              {t(label)}
               <span lang="ar" className="font-arabic">
                 {arabic}
               </span>
@@ -94,9 +96,9 @@ export function AthkarReader({ morning, evening }: { morning: Dhikr[]; evening: 
             {finished}/{list.length}
           </span>
           <button type="button" className="underline-offset-2 hover:underline" onClick={() => setShowEnglish((v) => !v)}>
-            {showEnglish ? "Hide English" : "Show English"}
+            {showEnglish ? t("Hide English") : t("Show English")}
           </button>
-          <button type="button" aria-label="Start again" className="rounded-full p-2 hover:bg-secondary" onClick={reset}>
+          <button type="button" aria-label={t("Start again")} className="rounded-full p-2 hover:bg-secondary" onClick={reset}>
             <RotateCcw className="size-4" aria-hidden />
           </button>
         </div>
@@ -111,13 +113,13 @@ export function AthkarReader({ morning, evening }: { morning: Dhikr[]; evening: 
               <button
                 type="button"
                 onClick={() => tap(d)}
-                aria-label={`Count this dhikr, ${count} of ${d.count}`}
+                aria-label={t("Count this dhikr, {count} of {total}", { count, total: d.count })}
                 className={cn(
                   "block w-full rounded-[1.5rem] border bg-card px-5 py-5 text-start transition-colors",
                   complete ? "border-grove/40 bg-[#eef2ea] opacity-80" : "border-border hover:border-brass",
                 )}
               >
-                {d.note ? <span className="text-xs tracking-wide text-brass uppercase">{d.note}</span> : null}
+                {d.note ? <span className="text-xs tracking-wide text-brass uppercase">{t(d.note)}</span> : null}
                 <p lang="ar" dir="rtl" className="font-arabic mt-1 text-2xl leading-[2.1] text-ink">
                   {d.arabic}
                 </p>
@@ -129,15 +131,15 @@ export function AthkarReader({ morning, evening }: { morning: Dhikr[]; evening: 
                       complete ? "bg-grove text-[#f6f1e6]" : "bg-secondary text-grove",
                     )}
                   >
-                    {complete ? "Done" : `${count} / ${d.count}`}
+                    {complete ? t("Done") : `${count} / ${d.count}`}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {d.count === 1 ? "Once" : `${d.count} times`}
+                    {d.count === 1 ? t("Once") : t("{n} times", { n: d.count })}
                   </span>
                 </span>
               </button>
               <details className="px-5 pt-1 text-xs leading-5 text-muted-foreground">
-                <summary className="cursor-pointer py-1">Source</summary>
+                <summary className="cursor-pointer py-1">{t("Source")}</summary>
                 {d.reference}
               </details>
             </li>
