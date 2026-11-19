@@ -5,7 +5,7 @@
 // scripts/fetch-library.mjs writes, for each collection:
 //   /library/hadith/<id>/index.json        the books with their hadith ranges
 //   /library/hadith/<id>/<book>.json       the hadiths of one book
-//   /library/hadith/<id>/search-<lang>.json  [number, plain text] pairs for search
+//   /library/hadith/<id>/search-<lang>.json  [number, plain text, book] rows for search
 export type HadithCollection = {
   id: string
   /** The dataset's name for the collection. */
@@ -34,7 +34,13 @@ export function collectionById(id: string): HadithCollection | undefined {
 }
 
 export type HadithBook = { n: number; name: string; first: number; last: number; count: number }
-export type HadithIndex = { name: string; total: number; books: HadithBook[] }
+export type HadithIndex = {
+  name: string
+  total: number
+  books: HadithBook[]
+  /** [first number, last number, book]: runs of consecutive hadiths in one book. */
+  runs: [number, number, number][]
+}
 export type Hadith = {
   /** Number in the collection. */
   n: number
@@ -44,7 +50,8 @@ export type Hadith = {
   /** Gradings: [scholar, grade]. */
   g?: [string, string][]
 }
-export type SearchRow = [number, string]
+/** [number, plain text, book]. */
+export type SearchRow = [number, string, number]
 
 /** Lower case, without Arabic diacritics, tatweel or alif and ya variants, for matching. */
 export function normalizeForSearch(text: string): string {
@@ -79,5 +86,6 @@ export function searchRows(rows: SearchRow[], query: string, limit = 50): Search
 
 /** The book that holds a hadith number. */
 export function bookOf(index: HadithIndex, n: number): HadithBook | undefined {
-  return index.books.find((b) => n >= b.first && n < b.last + 1)
+  const run = index.runs.find(([first, last]) => n >= first && n <= last)
+  return run ? index.books.find((b) => b.n === run[2]) : undefined
 }
