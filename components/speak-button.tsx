@@ -13,6 +13,7 @@ export function SpeakButton({ text, className }: { text: string; className?: str
   const { t } = useT()
   const [playing, setPlaying] = useState(false)
   const [failed, setFailed] = useState<"no-voice" | "error" | null>(null)
+  const [detail, setDetail] = useState("")
 
   useEffect(() => () => {
     if (stopCurrent && playing) void stopSpeaking()
@@ -34,6 +35,8 @@ export function SpeakButton({ text, className }: { text: string; className?: str
       await speakArabic(text)
     } catch (e) {
       setFailed(e instanceof NoArabicVoiceError ? "no-voice" : "error")
+      // The engine's own words, so a report from a phone tells us what went wrong.
+      setDetail(e instanceof Error ? e.message : String(e))
     } finally {
       if (stopCurrent === stop) stopCurrent = null
       setPlaying(false)
@@ -54,7 +57,9 @@ export function SpeakButton({ text, className }: { text: string; className?: str
       {failed ? (
         <span className="text-xs text-muted-foreground" role="status">
           {failed === "error"
-            ? t("The voice couldn't play this. Please try again.")
+            ? isNativeSpeech()
+              ? t("The voice couldn't play this. Check that the media volume is up and that a text-to-speech engine with Arabic is set in your phone's settings.")
+              : t("The voice couldn't play this. Please try again.")
             : isNativeSpeech()
               ? t("No Arabic voice found. Add Arabic in your phone's text-to-speech settings.")
               : t("This browser has no Arabic voice. Try Microsoft Edge or Chrome on your phone, or add an Arabic voice in your device's speech settings.")}
@@ -63,6 +68,7 @@ export function SpeakButton({ text, className }: { text: string; className?: str
               {t("Install voice")}
             </button>
           ) : null}
+          {failed === "error" && detail ? <span className="block opacity-70" dir="ltr">({detail})</span> : null}
         </span>
       ) : null}
     </span>

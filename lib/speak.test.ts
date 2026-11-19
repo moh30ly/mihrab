@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
-import { pickArabicVoice, speakableArabic, speechChunks } from "./speak"
+import { chunkTimeoutMs, pickArabicVoice, speakableArabic, speechChunks } from "./speak"
 
 const v = (lang: string, localService = true, name = lang) => ({ lang, localService, name })
 
@@ -30,5 +30,12 @@ describe("speechChunks", () => {
 describe("speakableArabic", () => {
   it("drops Quranic brackets, ayah marks and notes", () => {
     assert.equal(speakableArabic("﴿قُلْ هُوَ اللَّهُ أَحَدٌ ۝ اللَّهُ الصَّمَدُ﴾ (ثلاثا)"), "قُلْ هُوَ اللَّهُ أَحَدٌ اللَّهُ الصَّمَدُ")
+  })
+})
+
+describe("chunkTimeoutMs", () => {
+  it("gives longer chunks more time", () => {
+    assert.ok(chunkTimeoutMs("a".repeat(160)) > chunkTimeoutMs("a"))
+    assert.ok(chunkTimeoutMs("a") >= 8000)
   })
 })
