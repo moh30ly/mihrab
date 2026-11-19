@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1 --port 3847",
     "lint": "eslint",
-    "test": "tsx --test lib/prayer.test.ts lib/reminders.test.ts lib/native-reminders.test.ts",
+    "test": "tsx --test lib/prayer.test.ts lib/reminders.test.ts lib/native-reminders.test.ts lib/extra-reminders.test.ts",
     "android": "next build && cap sync android && cap open android",
     "android:sync": "next build && cap sync android",
     "quran:import": "node scripts/import-quran.mjs"
@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.6.2",
+    "@kazishariar/morning-evening-adhkar-data": "^1.0.3",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",

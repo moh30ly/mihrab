@@ -17,7 +17,7 @@ export default function QuranPage() {
         <div>
           <h1 className="font-heading text-4xl tracking-tight text-grove sm:text-5xl">The Holy Quran</h1>
           <p className="mt-1 max-w-md text-sm leading-6 text-muted-foreground sm:text-base">
-            All 114 surahs in Arabic, with an English meaning beneath each ayah.
+            All 114 surahs in Arabic, with the meaning in English and eight more languages.
           </p>
         </div>
         <p lang="ar" dir="rtl" className="shrink-0 font-quran text-2xl whitespace-nowrap text-grove sm:text-4xl">

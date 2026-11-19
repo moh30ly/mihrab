@@ -36,6 +36,8 @@ import {
   validDate,
 } from "@/lib/prayer"
 import { isInsideReminderWindow, reminderStorageKey } from "@/lib/reminders"
+import { duhaWindow, extraEventsForDay, zakatEvent, type ExtraEvent } from "@/lib/extra-reminders"
+import { ExtraRemindersPanel } from "@/components/extra-reminders-panel"
 import {
   commitPlace,
   commitSettings,
@@ -86,7 +88,7 @@ export function MihrabApp() {
   const permission = permissionOverride ?? storedPermission
   const [dismissed, setDismissed] = useState<string | null>(null)
   const firedRef = useRef<Set<string>>(new Set())
-  const contextRef = useRef({ place, settings, schedule: null as Schedule | null })
+  const contextRef = useRef({ place, settings, schedule: null as Schedule | null, extras: [] as ExtraEvent[] })
 
   useEffect(() => {
     const tick = () => setNow(Date.now())
@@ -116,9 +118,22 @@ export function MihrabApp() {
     }
   }, [place, settings, dayKey])
 
+  const extras = useMemo<ExtraEvent[]>(() => {
+    if (!place || !dayKey) return []
+    try {
+      const instant = new Date()
+      const list = [...extraEventsForDay(place, settings, 0, instant), ...extraEventsForDay(place, settings, 1, instant)]
+      const zakat = zakatEvent(place, settings, instant)
+      if (zakat) list.push(zakat)
+      return list
+    } catch {
+      return []
+    }
+  }, [place, settings, dayKey])
+
   useEffect(() => {
-    contextRef.current = { place, settings, schedule }
-  }, [place, settings, schedule])
+    contextRef.current = { place, settings, schedule, extras }
+  }, [place, settings, schedule, extras])
 
   useEffect(() => {
     if (!dayKey) return
@@ -161,6 +176,13 @@ export function MihrabApp() {
             current.settings.tone,
           )
         }
+      }
+      for (const extra of current.extras) {
+        const storageKey = reminderStorageKey(civilKey(current.place.timezone, extra.at), extra.key, 0)
+        if (!isInsideReminderWindow(instant, extra.at.getTime(), 0) || firedRef.current.has(storageKey)) continue
+        firedRef.current.add(storageKey)
+        changed = true
+        sendNotification(extra.title, extra.body, storageKey, current.settings.tone)
       }
       if (changed) saveFired(firedRef.current, todayKey)
     }, 1000)
@@ -247,7 +269,7 @@ export function MihrabApp() {
     document.title = `${PRAYER_INFO[next.key].name} ${formatRemainingShort(next.at.getTime() - now)} · Mihrab`
   }, [next, now])
 
-  const notice = ready && now != null ? buildNotice(times, place, settings, now) : null
+  const notice = ready && now != null ? buildNotice(times, place, settings, now) ?? extraNotice(extras, place, settings, now) : null
   const visibleNotice = notice && notice.key !== dismissed ? notice : null
   const zone = place && now != null ? timeZoneParts(place.timezone, new Date(now)) : null
   const deviceLabel = deviceZone && now != null ? timeZoneParts(deviceZone, new Date(now)) : null
@@ -420,6 +442,7 @@ export function MihrabApp() {
                   )
                 })}
               </ol>
+              <DuhaLine times={times.today} timezone={place.timezone} />
               {ramadan && (
                 <p className="px-4 py-3 text-sm leading-6 text-muted-foreground sm:px-5">
                   Ramadan, by the Umm al-Qura calendar. Suhoor ends at Fajr and iftar is at Maghrib. Local moonsighting can differ by a day.
@@ -455,7 +478,7 @@ export function MihrabApp() {
                 <div>
                   <h2 className="font-display text-3xl text-grove">Reminders</h2>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    While this page is open, Mihrab shows a notice at each prayer and counts down in the tab. Notifications also fire if you allow them.
+                    While this page is open, Mihrab shows a notice at each prayer and counts down in the tab. Notifications also fire if you allow them. In the Android app they arrive even when it is closed.
                   </p>
                 </div>
                 <Switch
@@ -528,6 +551,7 @@ export function MihrabApp() {
               {settings.remindersEnabled && !OBLIGATORY_KEYS.some((key) => settings.prayers[key]) && (
                 <p className="mt-3 text-sm text-muted-foreground">Choose at least one prayer to be notified.</p>
               )}
+              <ExtraRemindersPanel place={place} settings={settings} onChange={updateSettings} />
             </section>
 
             <section className="rounded-[1.75rem] border border-border bg-card px-4 py-5 sm:px-5">
@@ -558,6 +582,20 @@ export function MihrabApp() {
         onChange={updateSettings}
       />
     </div>
+  )
+}
+
+function DuhaLine({ times, timezone }: { times: DayTimes; timezone: string }) {
+  const w = duhaWindow(times)
+  if (!(w.end > w.start)) return null
+  return (
+    <p className="border-t border-border px-4 py-3 text-sm leading-6 text-muted-foreground sm:px-5">
+      <span className="font-medium text-grove">Duha</span>{" "}
+      <span lang="ar" dir="rtl" className="font-arabic text-brass">
+        الضحى
+      </span>{" "}
+      · from {formatPrayerTime(w.start, timezone)} until about {formatPrayerTime(w.end, timezone)}. A voluntary prayer of two or more rak‘ahs.
+    </p>
   )
 }
 
@@ -638,6 +676,15 @@ function buildNotice(schedule: Extract<Schedule, { error: false }>, place: Place
         body: `${name} at ${formatPrayerTime(event.at, place.timezone)} in ${place.label}.`,
       }
     }
+  }
+  return null
+}
+
+function extraNotice(extras: ExtraEvent[], place: Place, settings: Settings, now: number): Notice | null {
+  if (!settings.remindersEnabled) return null
+  for (const extra of extras) {
+    if (!isInsideReminderWindow(now, extra.at.getTime(), 0)) continue
+    return { key: `${civilKey(place.timezone, extra.at)}:${extra.key}:0`, title: extra.title, body: extra.body }
   }
   return null
 }

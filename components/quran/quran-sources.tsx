@@ -18,6 +18,15 @@ export function QuranSources() {
         . The translation is a rendering of the meaning, not the Quran itself.
       </p>
       <p>
+        Other translations: Arabic (Tafsir al-Muyassar, King Fahd Complex), German (Bubenheim &amp; Elyas), Italian (Piccardo), Chinese
+        (Makin), Japanese (Mita), Turkish (Shaban Britch), Portuguese (Helmi Nasr) and Spanish (Isa García), from quranenc.com and
+        Tanzil.net through the{" "}
+        <a className="underline underline-offset-2" href="https://github.com/fawazahmed0/quran-api" rel="noopener">
+          quran-api
+        </a>{" "}
+        mirror. Translations render the meaning; only the Arabic is the Quran.
+      </p>
+      <p>
         {QURAN_SOURCES.dataset}{" "}
         <a className="underline underline-offset-2" href="https://github.com/risan/quran-json" rel="noopener">
           github.com/risan/quran-json
