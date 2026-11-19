@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_small_label">Next prayer</string>
+    <string name="widget_large_label">Prayer times</string>
+    <string name="widget_small_description">The next prayer and the time left until it.</string>
+    <string name="widget_large_description">The next prayer with a countdown, today\'s five prayers, the Hijri date and a good deed for the day.</string>
+    <string name="widget_empty">Open Mihrab and choose your location.</string>
+</resources>

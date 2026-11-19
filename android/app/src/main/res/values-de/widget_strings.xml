@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_small_label">Nächstes Gebet</string>
+    <string name="widget_large_label">Gebetszeiten</string>
+    <string name="widget_small_description">Das nächste Gebet und die verbleibende Zeit bis dahin.</string>
+    <string name="widget_large_description">Das nächste Gebet mit Countdown, die fünf Gebete von heute, das Hidschri-Datum und eine gute Tat für den Tag.</string>
+    <string name="widget_empty">Öffne Mihrab und wähle deinen Standort.</string>
+</resources>
