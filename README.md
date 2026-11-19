@@ -54,7 +54,14 @@ The Android app wraps the same static site with [Capacitor](https://capacitorjs.
 - Locally, with Android Studio installed: `npm run android`.
 - Icons and splash screens come from `resources/` (`python3 scripts/make-icons.py`, then `npx @capacitor/assets generate --android`).
 
-A Play Store release needs a signed bundle (`./gradlew bundleRelease`) with your own upload key.
+### Google Play bundle
+
+The **Play bundle** GitHub Action builds the signed `.aab` to upload to Google Play. Run it from the Actions tab with **Run workflow** and enter the version name (for example `1.0.0`), or push a tag such as `v1.0.0`. The bundle is in the run's artifacts as `mihrab-play-bundle`.
+
+- It signs with the Play upload key, read from two repository secrets: `ANDROID_KEYSTORE_BASE64` (the `.jks` file, base64-encoded) and `ANDROID_KEYSTORE_PASSWORD`. The key alias is `upload`.
+- Each run gets a larger version code (100 + the run number), so every bundle can be uploaded.
+- Keep a private backup of the upload key. If it is lost, Google Play support can reset it, but only for apps enrolled in Play App Signing.
+- To build locally, set `MIHRAB_KEYSTORE_FILE` and `MIHRAB_KEYSTORE_PASSWORD`, then run `./gradlew bundleRelease -PversionCode=101 -PversionName=1.0.0` in `android/`.
 
 ## Sources
 
