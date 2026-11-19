@@ -5,6 +5,7 @@ import { QuranSources } from "@/components/quran/quran-sources"
 import { SURAHS } from "@/lib/quran-index"
 import { T } from "@/lib/i18n"
 import { ArabicTitle } from "@/components/arabic-title"
+import { LibraryTabs } from "@/components/library-tabs"
 
 export const metadata: Metadata = {
   title: "The Holy Quran — read all 114 surahs",
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
 export default function QuranPage() {
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-12 sm:px-6">
+      <LibraryTabs className="mb-5" />
       <header className="text-center">
         <ArabicTitle className="font-quran">القرآن الكريم</ArabicTitle>
         <h1 className="font-heading text-4xl tracking-tight text-grove"><T k="The Holy Quran" /></h1>

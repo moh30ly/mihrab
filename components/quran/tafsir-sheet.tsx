@@ -98,7 +98,7 @@ export function TafsirSheet({
   return (
     <Sheet open={ayah !== null} onOpenChange={(open) => (open ? undefined : onClose())}>
       <SheetContent side="bottom" className="mx-auto max-h-[88dvh] w-full max-w-3xl gap-0 rounded-t-[1.5rem] border-gold/50 pb-[env(safe-area-inset-bottom)]">
-        <SheetHeader className="border-b border-border pe-12">
+        <SheetHeader className="border-b border-border pr-12 pl-4">
           <SheetTitle className="font-heading text-xl text-grove">
             {t("Tafsir")} · {surahId}:{ayah}
           </SheetTitle>
@@ -177,7 +177,7 @@ export function TafsirSheet({
             </>
           )}
           <p className="mt-6 border-t border-border pt-3 text-xs leading-5 text-muted-foreground">
-            {info.english}.{" "}
+            {locale === info.lang ? info.name : info.english}.{" "}
             <a className="underline underline-offset-2" href={info.sourceUrl} rel="noopener" target="_blank">
               {info.source}
             </a>

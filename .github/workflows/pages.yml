@@ -32,7 +32,7 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .cache/library
-          key: library-${{ hashFiles('scripts/fetch-library.mjs', 'lib/tafsir.ts') }}
+          key: library-${{ hashFiles('scripts/fetch-library.mjs', 'lib/tafsir.ts', 'lib/hadith.ts') }}
           restore-keys: library-
       - run: node scripts/fetch-library.mjs out
       - uses: actions/upload-pages-artifact@v3

@@ -1,4 +1,4 @@
-// Writes the tafsir collections (and, later, other large texts) as small
+// Writes the tafsir and hadith collections as small
 // static JSON files under <out>/library/, which the app fetches on demand.
 // They are not committed: the website workflow runs this after `next build`
 // with `out` as the target, so they ship with mihrab.live but not inside the
@@ -7,7 +7,7 @@
 // Downloads are pinned to a release and cached in .cache/library/, so a
 // second run works offline. The texts are written unchanged.
 //
-// Usage: node scripts/fetch-library.mjs [out-dir]   (default: public, for `npm run dev`)
+// Usage: node scripts/fetch-library.mjs [out-dir] [tafsir|hadith]   (default: public, both)
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
@@ -110,4 +110,85 @@ async function tafsir() {
   }
 }
 
-await tafsir()
+// ---- Hadith -----------------------------------------------------------------
+// fawazahmed0/hadith-api (Unlicense): https://github.com/fawazahmed0/hadith-api
+const HADITH_REF = "1"
+const HADITH_LANGS = { en: "eng", tr: "tur" }
+
+/** Same rules as normalizeForSearch in lib/hadith.ts. */
+function normalizeForSearch(text) {
+  return text
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f\u0610-\u061a\u064b-\u065f\u0670\u06d6-\u06ed\u0640]/g, "")
+    .replace(/[أإآٱ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ة/g, "ه")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+}
+
+async function edition(name) {
+  const url = `https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@${HADITH_REF}/editions/${name}.min.json`
+  const raw = `https://raw.githubusercontent.com/fawazahmed0/hadith-api/${HADITH_REF}/editions/${name}.min.json`
+  try {
+    return JSON.parse(await cached(`hadith/${HADITH_REF}/${name}.json`, raw))
+  } catch {
+    return JSON.parse(await cached(`hadith/${HADITH_REF}/${name}.json`, url))
+  }
+}
+
+async function hadith() {
+  const src = readFileSync(join(root, "lib", "hadith.ts"), "utf8")
+  const list = [...src.matchAll(/\{ id: "(\w+)", key: "(\w+)",[^\n]*extra: \[([^\]]*)\] \}/g)].map((m) => ({
+    id: m[1],
+    key: m[2],
+    extra: [...m[3].matchAll(/"(\w+)"/g)].map((x) => x[1]),
+  }))
+  if (list.length === 0) throw new Error("No hadith collections found in lib/hadith.ts")
+
+  rmSync(join(outDir, "hadith"), { recursive: true, force: true })
+  for (const c of list) {
+    const ara = await edition(`ara-${c.key}`)
+    const langs = { en: await edition(`${HADITH_LANGS.en}-${c.key}`) }
+    for (const l of c.extra) langs[l] = await edition(`${HADITH_LANGS[l]}-${c.key}`)
+
+    const byNumber = (e) => new Map(e.hadiths.map((h) => [h.hadithnumber, h]))
+    const maps = Object.fromEntries(Object.entries(langs).map(([l, e]) => [l, byNumber(e)]))
+    const books = new Map()
+    const search = { ar: [], en: [] }
+    for (const h of ara.hadiths) {
+      const en = maps.en.get(h.hadithnumber)
+      const row = { n: h.hadithnumber, ar: h.text.trim(), en: (en?.text ?? "").trim() }
+      for (const l of c.extra) {
+        const t = (maps[l].get(h.hadithnumber)?.text ?? "").trim()
+        if (t) row[l] = t
+      }
+      if (!row.ar && !row.en) continue
+      const grades = (en?.grades?.length ? en.grades : h.grades) ?? []
+      if (grades.length) row.g = grades.map((g) => [g.name, g.grade])
+      const book = h.reference?.book ?? 0
+      if (!books.has(book)) books.set(book, [])
+      books.get(book).push(row)
+      if (row.ar) search.ar.push([row.n, normalizeForSearch(row.ar)])
+      if (row.en) search.en.push([row.n, normalizeForSearch(row.en)])
+    }
+
+    const names = langs.en.metadata.sections
+    const index = { name: langs.en.metadata.name, total: 0, books: [] }
+    for (const [n, rows] of [...books].sort((a, b) => a[0] - b[0])) {
+      write(`hadith/${c.id}/${n}.json`, rows)
+      const nums = rows.map((r) => r.n)
+      index.books.push({ n, name: (names[n] ?? "").trim(), first: Math.min(...nums), last: Math.max(...nums), count: rows.length })
+      index.total += rows.length
+    }
+    write(`hadith/${c.id}/index.json`, index)
+    write(`hadith/${c.id}/search-ar.json`, search.ar)
+    write(`hadith/${c.id}/search-en.json`, search.en)
+    console.log(`hadith ${c.id}: ${index.total} hadiths in ${index.books.length} books`)
+  }
+}
+
+const only = process.argv[3]
+if (!only || only === "tafsir") await tafsir()
+if (!only || only === "hadith") await hadith()
