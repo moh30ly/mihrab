@@ -40,8 +40,13 @@ const arrays = (file, name) => {
 arrays("lib/extra-reminders.ts", "HIJRI_MONTHS")
 arrays("lib/prayer.ts", "CARDINALS")
 arrays("components/mihrab-app.tsx", "LEADS")
-for (const k of ["Morning", "Evening"]) keys.add(k)
+for (const k of ["Morning", "Evening", "Duas", "Ruqya"]) keys.add(k)
 for (const d of JSON.parse(readFileSync(join(root, "data/athkar.json"), "utf8"))) if (d.note) keys.add(d.note)
+fields("lib/duas.ts", ["title"])
+for (const d of JSON.parse(readFileSync(join(root, "data/duas.json"), "utf8"))) {
+  keys.add(d.title)
+  if (d.note) keys.add(d.note)
+}
 
 const list = [...keys].sort()
 if (process.argv.includes("--check")) {

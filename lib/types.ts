@@ -55,6 +55,10 @@ export type ExtraReminders = {
   /** Hijri month 1–12 and day 1–30 of the zakat year (hawl). */
   zakatMonth: number
   zakatDay: number
+  /** A dua from the collection each day, after Dhuhr. */
+  duaOfDay: boolean
+  /** A nudge to read some Quran every hour, on the hour, between Fajr and Isha. */
+  quranHourly: boolean
 }
 
 export type Settings = {

@@ -182,7 +182,7 @@ export function MihrabApp() {
         }
       }
       for (const extra of current.extras) {
-        const storageKey = reminderStorageKey(civilKey(current.place.timezone, extra.at), extra.key, 0)
+        const storageKey = reminderStorageKey(civilKey(current.place.timezone, extra.at), extra.hour == null ? extra.key : `${extra.key}${extra.hour}`, 0)
         if (!isInsideReminderWindow(instant, extra.at.getTime(), 0) || firedRef.current.has(storageKey)) continue
         firedRef.current.add(storageKey)
         changed = true
@@ -689,7 +689,7 @@ function extraNotice(extras: ExtraEvent[], place: Place, settings: Settings, now
   if (!settings.remindersEnabled) return null
   for (const extra of extras) {
     if (!isInsideReminderWindow(now, extra.at.getTime(), 0)) continue
-    return { key: `${civilKey(place.timezone, extra.at)}:${extra.key}:0`, title: extra.title, body: extra.body }
+    return { key: `${civilKey(place.timezone, extra.at)}:${extra.key}${extra.hour ?? ""}:0`, title: extra.title, body: extra.body }
   }
   return null
 }

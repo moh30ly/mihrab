@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 import { extraEventsForDay, hijriParts, nextZakatDate, zonedTime } from "./extra-reminders"
 import { buildNativeReminders } from "./native-reminders"
+import { dayTimes } from "./prayer"
 import { DEFAULT_SETTINGS } from "./storage"
 import type { Place, Settings } from "./types.ts"
 
@@ -19,7 +20,7 @@ const london: Place = {
 const all: Settings = {
   ...DEFAULT_SETTINGS,
   remindersEnabled: true,
-  extras: { ...DEFAULT_SETTINGS.extras, duha: true, athkarMorning: true, athkarEvening: true, sadaqah: true, sadaqahDay: 5, zakat: true },
+  extras: { ...DEFAULT_SETTINGS.extras, duha: true, athkarMorning: true, athkarEvening: true, sadaqah: true, sadaqahDay: 5, zakat: true, duaOfDay: true, quranHourly: true },
 }
 
 describe("extra reminders", () => {
@@ -32,7 +33,7 @@ describe("extra reminders", () => {
   it("puts Duha after sunrise and the athkar after Fajr and Asr", () => {
     const now = new Date("2026-03-04T00:30:00Z") // a Wednesday in London
     const events = extraEventsForDay(london, all, 0, now)
-    const keys = events.map((e) => e.key)
+    const keys = events.map((e) => e.key).filter((k) => k !== "quran" && k !== "duaOfDay")
     assert.deepEqual(keys, ["duha", "athkarMorning", "athkarEvening"])
     const duha = events[0].at.getTime()
     const morning = events[1].at.getTime()
@@ -56,6 +57,32 @@ describe("extra reminders", () => {
     assert.equal(h?.day, 1)
     assert.ok(at.getTime() > now.getTime())
     assert.ok(at.getTime() - now.getTime() < 366 * 86400_000)
+  })
+
+  it("sends the dua of the day after Dhuhr, a different one each day", () => {
+    const now = new Date("2026-03-04T00:30:00Z")
+    const today = extraEventsForDay(london, all, 0, now).find((e) => e.key === "duaOfDay")
+    const tomorrow = extraEventsForDay(london, all, 1, now).find((e) => e.key === "duaOfDay")
+    assert.ok(today && tomorrow)
+    assert.equal(today.title, "Dua of the day")
+    const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "numeric" }).format(today.at))
+    assert.ok(hour >= 12 && hour <= 13, `dua at ${today.at.toISOString()}`)
+    assert.notEqual(today.body, tomorrow.body)
+  })
+
+  it("reminds to read Quran every hour on the hour between Fajr and Isha", () => {
+    const now = new Date("2026-03-04T00:30:00Z")
+    const hourly = extraEventsForDay(london, all, 0, now).filter((e) => e.key === "quran")
+    const { fajr, isha } = dayTimes(london, all, 0, now)
+    const hours = hourly.map((e) => e.at.getTime())
+    assert.ok(hours.length >= 12, `${hours.length} reminders`)
+    assert.ok(hours[0] > fajr.getTime() && hours[0] - 3600_000 <= fajr.getTime(), "the first comes in the hour after Fajr")
+    const last = hours[hours.length - 1]
+    assert.ok(last < isha.getTime() && last + 3600_000 >= isha.getTime(), "the last comes in the hour before Isha")
+    hours.slice(1).forEach((t, i) => assert.equal(t - hours[i], 3600_000))
+    assert.ok(hourly.every((e) => e.at.getUTCMinutes() === 0))
+    const off = { ...all, extras: { ...all.extras, quranHourly: false } }
+    assert.ok(!extraEventsForDay(london, off, 0, now).some((e) => e.key === "quran"))
   })
 
   it("schedules the extras natively with ids that don't collide", () => {

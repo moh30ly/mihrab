@@ -53,6 +53,24 @@ export function ExtraRemindersPanel({
           checked={x.athkarEvening}
           onChange={(v) => set({ athkarEvening: v })}
         />
+        <Row
+          id="dua-of-day"
+          label={t("Dua of the day")}
+          hint={
+            <>
+              {t("20 minutes after Dhuhr.")} <Link className="underline underline-offset-2" href="/athkar/#duas">{t("See all duas")}</Link>
+            </>
+          }
+          checked={x.duaOfDay}
+          onChange={(v) => set({ duaOfDay: v })}
+        />
+        <Row
+          id="quran-hourly"
+          label={t("Hourly Quran reading")}
+          hint={t("Every hour on the hour, between Fajr and Isha.")}
+          checked={x.quranHourly}
+          onChange={(v) => set({ quranHourly: v })}
+        />
         <Row id="sadaqah" label={t("Weekly sadaqah")} hint={t("At 10:00 on the day you choose.")} checked={x.sadaqah} onChange={(v) => set({ sadaqah: v })}>
           {x.sadaqah ? (
             <select
@@ -109,7 +127,7 @@ export function ExtraRemindersPanel({
           ) : null}
         </Row>
       </ul>
-      {!settings.remindersEnabled && (x.duha || x.athkarMorning || x.athkarEvening || x.sadaqah || x.zakat) ? (
+      {!settings.remindersEnabled && (x.duha || x.athkarMorning || x.athkarEvening || x.duaOfDay || x.quranHourly || x.sadaqah || x.zakat) ? (
         <p className="mt-2 text-sm text-muted-foreground">{t("Turn on reminders above for these to arrive.")}</p>
       ) : null}
     </div>
