@@ -27,7 +27,7 @@ export const DUA_GROUPS: { id: DuaGroupId; title: string; arabic: string }[] = [
   { id: "sleep", title: "Waking and sleeping", arabic: "الاستيقاظ والنوم" },
   { id: "home", title: "Home and clothing", arabic: "البيت واللباس" },
   { id: "purity", title: "Toilet and wudu", arabic: "الخلاء والوضوء" },
-  { id: "mosque", title: "Mosque and adhan", arabic: "المسجد والأذان" },
+  { id: "mosque", title: "Prayer and mosque", arabic: "الصلاة والمسجد" },
   { id: "food", title: "Food and fasting", arabic: "الطعام والصيام" },
   { id: "travel", title: "Travel", arabic: "السفر" },
   { id: "nature", title: "Rain, wind and the new moon", arabic: "المطر والريح والهلال" },

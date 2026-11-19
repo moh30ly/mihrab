@@ -65,6 +65,24 @@ const DUAS = [
     "O Allah, I submit my face to You, entrust my affairs to You and rely on You completely, in hope of You and in awe of You. There is no refuge and no escape from You except to You. O Allah, I believe in Your Book which You revealed and in Your Prophet whom You sent.",
     ref("Al-Bukhari 247", "Muslim 2710"),
   ],
+  [
+    "turning-at-night",
+    "sleep",
+    "Turning over in the night",
+    "لَا إِلَهَ إِلَّا اللَّهُ الْوَاحِدُ الْقَهَّارُ، رَبُّ السَّمَوَاتِ وَالْأَرْضِ وَمَا بَيْنَهُمَا الْعَزِيزُ الْغَفَّارُ",
+    "None has the right to be worshipped but Allah, the One, the Prevailing, Lord of the heavens and the earth and all between them, the Mighty, the Forgiving.",
+    ref("An-Nasa’i, ‘Amal al-Yawm wal-Laylah 864", "Al-Hakim 1/540"),
+  ],
+  [
+    "bad-dream",
+    "sleep",
+    "After a bad dream",
+    "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ",
+    "I seek refuge in Allah from Satan the outcast.",
+    ref("Muslim 2261", "Muslim 2262"),
+    3,
+    "Blow lightly to your left three times, turn onto your other side, and tell no one about it",
+  ],
 
   // Home and clothing
   [
@@ -108,6 +126,16 @@ const DUAS = [
     "اللَّهُمَّ لَكَ الْحَمْدُ أَنْتَ كَسَوْتَنِيهِ، أَسْأَلُكَ مِنْ خَيْرِهِ وَخَيْرِ مَا صُنِعَ لَهُ، وَأَعُوذُ بِكَ مِنْ شَرِّهِ وَشَرِّ مَا صُنِعَ لَهُ",
     "O Allah, all praise is Yours. You have clothed me with it. I ask You for its good and the good it was made for, and I seek refuge in You from its evil and the evil it was made for.",
     ref("Abu Dawud 4020", "At-Tirmidhi 1767"),
+  ],
+  [
+    "undressing",
+    "home",
+    "Taking off your clothes",
+    "بِسْمِ اللَّهِ",
+    "In the name of Allah.",
+    ref("At-Tirmidhi 606"),
+    1,
+    "A screen between the jinn and your ‘awrah",
   ],
 
   // Toilet and wudu
@@ -182,6 +210,24 @@ const DUAS = [
     ref("Al-Bukhari 614"),
     1,
     "After repeating the words of the adhan",
+  ],
+  [
+    "after-salam",
+    "mosque",
+    "After the salam of the prayer",
+    "أَسْتَغْفِرُ اللَّهَ (ثَلَاثًا)، اللَّهُمَّ أَنْتَ السَّلَامُ، وَمِنْكَ السَّلَامُ، تَبَارَكْتَ يَا ذَا الْجَلَالِ وَالْإِكْرَامِ",
+    "I seek Allah's forgiveness (three times). O Allah, You are Peace and from You comes peace. Blessed are You, Possessor of majesty and honour.",
+    ref("Muslim 591"),
+  ],
+  [
+    "after-prayer-tahlil",
+    "mosque",
+    "After the prayer",
+    "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ، اللَّهُمَّ لَا مَانِعَ لِمَا أَعْطَيْتَ، وَلَا مُعْطِيَ لِمَا مَنَعْتَ، وَلَا يَنْفَعُ ذَا الْجَدِّ مِنْكَ الْجَدُّ",
+    "None has the right to be worshipped but Allah alone, without partner. His is the dominion and His is the praise, and He is able to do all things. O Allah, none can withhold what You give, none can give what You withhold, and the wealth of the wealthy cannot avail him against You.",
+    ref("Al-Bukhari 844", "Muslim 593"),
+    1,
+    "Then SubhanAllah 33, Alhamdulillah 33 and Allahu Akbar 34",
   ],
 
   // Food and fasting
@@ -276,6 +322,14 @@ const DUAS = [
     "أَسْتَوْدِعُكُمُ اللَّهَ الَّذِي لَا تَضِيعُ وَدَائِعُهُ",
     "I entrust you to Allah, whose trusts are never lost.",
     ref("Ibn Majah 2825"),
+  ],
+  [
+    "market",
+    "travel",
+    "Entering the market",
+    "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، يُحْيِي وَيُمِيتُ وَهُوَ حَيٌّ لَا يَمُوتُ، بِيَدِهِ الْخَيْرُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+    "None has the right to be worshipped but Allah alone, without partner. His is the dominion and His is the praise. He gives life and causes death, and He is Ever-Living and never dies. In His hand is all good, and He is able to do all things.",
+    ref("At-Tirmidhi 3428", "Ibn Majah 2235"),
   ],
 
   // Rain, wind and the new moon
@@ -438,6 +492,48 @@ const DUAS = [
     ref("Abu Dawud 4859", "At-Tirmidhi 3433"),
   ],
   [
+    "seeing-afflicted",
+    "people",
+    "On seeing someone in hardship",
+    "الْحَمْدُ لِلَّهِ الَّذِي عَافَانِي مِمَّا ابْتَلَاكَ بِهِ، وَفَضَّلَنِي عَلَى كَثِيرٍ مِمَّنْ خَلَقَ تَفْضِيلًا",
+    "All praise is for Allah, who has spared me what He has tried you with, and favoured me greatly over much of His creation.",
+    ref("At-Tirmidhi 3432"),
+    1,
+    "Said quietly, so the person does not hear",
+  ],
+  [
+    "love-for-allah",
+    "people",
+    "When someone says “I love you for Allah’s sake”",
+    "أَحَبَّكَ الَّذِي أَحْبَبْتَنِي لَهُ",
+    "May the One for whose sake you love me love you.",
+    ref("Abu Dawud 5125"),
+  ],
+  [
+    "repaying-debt",
+    "people",
+    "Repaying someone who lent to you",
+    "بَارَكَ اللَّهُ لَكَ فِي أَهْلِكَ وَمَالِكَ",
+    "May Allah bless you in your family and your wealth.",
+    ref("An-Nasa’i 4683", "Ibn Majah 2424"),
+  ],
+  [
+    "condolence",
+    "people",
+    "Consoling someone who lost a loved one",
+    "إِنَّ لِلَّهِ مَا أَخَذَ، وَلَهُ مَا أَعْطَى، وَكُلُّ شَيْءٍ عِنْدَهُ بِأَجَلٍ مُسَمًّى، فَلْتَصْبِرْ وَلْتَحْتَسِبْ",
+    "To Allah belongs what He took and what He gave, and everything with Him has an appointed term. So be patient and hope for the reward.",
+    ref("Al-Bukhari 1284", "Muslim 923"),
+  ],
+  [
+    "visiting-graves",
+    "people",
+    "Visiting the graves",
+    "السَّلَامُ عَلَيْكُمْ أَهْلَ الدِّيَارِ مِنَ الْمُؤْمِنِينَ وَالْمُسْلِمِينَ، وَإِنَّا إِنْ شَاءَ اللَّهُ لَلَاحِقُونَ، أَسْأَلُ اللَّهَ لَنَا وَلَكُمُ الْعَافِيَةَ",
+    "Peace be upon you, people of these dwellings, believers and Muslims. We will surely join you, if Allah wills. I ask Allah for well-being for us and for you.",
+    ref("Muslim 975"),
+  ],
+  [
     "good-news",
     "people",
     "On good news, and on bad",
@@ -572,6 +668,16 @@ const DUAS = [
     ref("At-Tirmidhi 3513", "Ibn Majah 3850"),
     1,
     "Taught for the nights of Laylat al-Qadr",
+  ],
+  [
+    "istikhara",
+    "sunnah",
+    "Istikhara, seeking Allah's guidance in a decision",
+    "اللَّهُمَّ إِنِّي أَسْتَخِيرُكَ بِعِلْمِكَ، وَأَسْتَقْدِرُكَ بِقُدْرَتِكَ، وَأَسْأَلُكَ مِنْ فَضْلِكَ الْعَظِيمِ، فَإِنَّكَ تَقْدِرُ وَلَا أَقْدِرُ، وَتَعْلَمُ وَلَا أَعْلَمُ، وَأَنْتَ عَلَّامُ الْغُيُوبِ، اللَّهُمَّ إِنْ كُنْتَ تَعْلَمُ أَنَّ هَذَا الْأَمْرَ (وَيُسَمِّي حَاجَتَهُ) خَيْرٌ لِي فِي دِينِي وَمَعَاشِي وَعَاقِبَةِ أَمْرِي، فَاقْدُرْهُ لِي وَيَسِّرْهُ لِي، ثُمَّ بَارِكْ لِي فِيهِ، وَإِنْ كُنْتَ تَعْلَمُ أَنَّ هَذَا الْأَمْرَ شَرٌّ لِي فِي دِينِي وَمَعَاشِي وَعَاقِبَةِ أَمْرِي، فَاصْرِفْهُ عَنِّي وَاصْرِفْنِي عَنْهُ، وَاقْدُرْ لِيَ الْخَيْرَ حَيْثُ كَانَ، ثُمَّ أَرْضِنِي بِهِ",
+    "O Allah, I seek Your guidance by Your knowledge and Your power by Your power, and I ask You of Your immense bounty. You are able and I am not; You know and I do not, and You are the Knower of the unseen. O Allah, if You know that this matter (name it) is good for me in my religion, my livelihood and my final outcome, then decree it for me, make it easy for me, and bless it for me. And if You know that this matter is bad for me in my religion, my livelihood and my final outcome, then turn it away from me and turn me away from it, decree for me what is good wherever it may be, and make me content with it.",
+    ref("Al-Bukhari 1162"),
+    1,
+    "After praying two voluntary rak‘ahs",
   ],
   [
     "beneficial-knowledge",
