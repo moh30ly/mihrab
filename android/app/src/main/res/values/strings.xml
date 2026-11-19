@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mihrab</string>
+    <string name="title_activity_main">Mihrab</string>
+    <string name="package_name">live.mihrab.app</string>
+    <string name="custom_url_scheme">live.mihrab.app</string>
+</resources>

@@ -7,10 +7,16 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1 --port 3847",
     "lint": "eslint",
-    "test": "tsx --test lib/prayer.test.ts lib/reminders.test.ts"
+    "test": "tsx --test lib/prayer.test.ts lib/reminders.test.ts lib/native-reminders.test.ts",
+    "android": "next build && cap sync android && cap open android",
+    "android:sync": "next build && cap sync android",
+    "quran:import": "node scripts/import-quran.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/local-notifications": "^8.3.1",
     "adhan": "^4.4.6",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
@@ -23,6 +29,7 @@
     "tz-lookup": "^6.1.25"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -30,6 +37,7 @@
     "@types/tz-lookup": "^6.1.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "quran-json": "^3.1.2",
     "tailwindcss": "4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^5"

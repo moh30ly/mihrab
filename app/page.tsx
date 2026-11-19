@@ -1,13 +1,6 @@
-import { Suspense } from "react"
-import { connection } from "next/server"
 import { Guide } from "@/components/guide"
 import { MihrabApp } from "@/components/mihrab-app"
 import { FAQ } from "@/lib/faq"
-
-async function RequestConnection() {
-  await connection()
-  return null
-}
 
 const appJsonLd = {
   "@context": "https://schema.org",
@@ -40,9 +33,6 @@ const faqJsonLd = {
 export default function Page() {
   return (
     <>
-      <Suspense fallback={null}>
-        <RequestConnection />
-      </Suspense>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
