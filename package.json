@@ -10,7 +10,8 @@
     "test": "tsx --test lib/prayer.test.ts lib/reminders.test.ts lib/native-reminders.test.ts lib/extra-reminders.test.ts lib/zakat.test.ts",
     "android": "next build && cap sync android && cap open android",
     "android:sync": "next build && cap sync android",
-    "quran:import": "node scripts/import-quran.mjs"
+    "quran:import": "node scripts/import-quran.mjs",
+    "library:fetch": "node scripts/fetch-library.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
