@@ -157,7 +157,12 @@ async function hadith() {
     const maps = Object.fromEntries(Object.entries(langs).map(([l, e]) => [l, byNumber(e)]))
     const books = new Map()
     const search = { ar: [], en: [] }
-    for (const h of ara.hadiths) {
+    // Some hadiths have no reference ({ book: 0, hadith: 0 }); they belong to
+    // the book of the hadith numbered just before them.
+    let lastBook = 0
+    const placed = []
+    const sorted = [...ara.hadiths].sort((a, b) => a.hadithnumber - b.hadithnumber)
+    for (const h of sorted) {
       const en = maps.en.get(h.hadithnumber)
       const row = { n: h.hadithnumber, ar: h.text.trim(), en: (en?.text ?? "").trim() }
       for (const l of c.extra) {
@@ -167,15 +172,25 @@ async function hadith() {
       if (!row.ar && !row.en) continue
       const grades = (en?.grades?.length ? en.grades : h.grades) ?? []
       if (grades.length) row.g = grades.map((g) => [g.name, g.grade])
-      const book = h.reference?.book ?? 0
+      const ref = h.reference ?? { book: 0, hadith: 0 }
+      const book = ref.book === 0 && ref.hadith === 0 ? lastBook : ref.book
+      lastBook = book
+      placed.push([row.n, book])
       if (!books.has(book)) books.set(book, [])
       books.get(book).push(row)
-      if (row.ar) search.ar.push([row.n, normalizeForSearch(row.ar)])
-      if (row.en) search.en.push([row.n, normalizeForSearch(row.en)])
+      if (row.ar) search.ar.push([row.n, normalizeForSearch(row.ar), book])
+      if (row.en) search.en.push([row.n, normalizeForSearch(row.en), book])
     }
 
     const names = langs.en.metadata.sections
-    const index = { name: langs.en.metadata.name, total: 0, books: [] }
+    // Runs of consecutive numbers in the same book, to find a hadith by number.
+    const runs = []
+    for (const [n, book] of placed) {
+      const last = runs.at(-1)
+      if (last && last[2] === book) last[1] = n
+      else runs.push([n, n, book])
+    }
+    const index = { name: langs.en.metadata.name, total: 0, books: [], runs }
     for (const [n, rows] of [...books].sort((a, b) => a[0] - b[0])) {
       write(`hadith/${c.id}/${n}.json`, rows)
       const nums = rows.map((r) => r.n)

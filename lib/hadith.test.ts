@@ -14,9 +14,9 @@ test("searchLanguage picks Arabic for Arabic letters", () => {
 
 test("searchRows needs every word and ranks exact phrases first", () => {
   const rows: SearchRow[] = [
-    [1, "the reward of deeds depends upon the intentions"],
-    [2, "intentions and deeds of the reward"],
-    [3, "prayer at night"],
+    [1, "the reward of deeds depends upon the intentions", 1],
+    [2, "intentions and deeds of the reward", 1],
+    [3, "prayer at night", 2],
   ]
   assert.deepEqual(searchRows(rows, "reward deeds").map((r) => r[0]), [1, 2])
   assert.deepEqual(searchRows(rows, "of the reward").map((r) => r[0]), [2, 1])
@@ -32,9 +32,13 @@ test("bookOf finds the book holding a hadith number", () => {
       { n: 1, name: "a", first: 1, last: 7, count: 7 },
       { n: 2, name: "b", first: 8, last: 10, count: 3 },
     ],
+    runs: [
+      [1, 7, 1],
+      [8, 10, 2],
+    ],
   }
   assert.equal(bookOf(index, 7)?.n, 1)
-  assert.equal(bookOf(index, 7.5)?.n, 1)
+  assert.equal(bookOf(index, 6.5)?.n, 1)
   assert.equal(bookOf(index, 8)?.n, 2)
   assert.equal(bookOf(index, 11), undefined)
 })

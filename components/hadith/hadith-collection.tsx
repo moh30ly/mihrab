@@ -292,12 +292,12 @@ function SearchResults({
               : t("{n} matches", { n: results.length })}
       </p>
       <ol className="mt-2 grid gap-2">
-        {results.map(([n, text]) => {
-          const book = bookOf(index, n)
+        {results.map(([n, text, bookNumber]) => {
+          const book = index.books.find((b) => b.n === bookNumber)
           return (
             <li key={n}>
               <a
-                href={`#book-${book?.n ?? 0}-h${n}`}
+                href={`#book-${bookNumber}-h${n}`}
                 onClick={onOpen}
                 className="andalus-card block px-4 py-3 transition-colors hover:bg-accent"
               >
