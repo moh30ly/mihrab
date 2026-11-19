@@ -30,6 +30,10 @@ jobs:
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
+      # Checks that the release bundle still builds. The signed one comes from play-bundle.yml.
+      - name: Build release bundle (unsigned)
+        working-directory: android
+        run: ./gradlew bundleRelease --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: mihrab-debug-apk
