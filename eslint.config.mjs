@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated Android project and its copied web bundle:
+    "android/**",
   ]),
 ]);
 

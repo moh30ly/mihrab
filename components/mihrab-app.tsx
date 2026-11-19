@@ -22,6 +22,7 @@ import {
   timeZoneParts,
 } from "@/lib/format"
 import { madhabById, methodById, PRAYER_INFO } from "@/lib/methods"
+import { isNativeApp, nativePermission, syncNativeReminders } from "@/lib/native-reminders"
 import { primeTone, sendNotification } from "@/lib/notify"
 import {
   civilKey,
@@ -207,8 +208,26 @@ export function MihrabApp() {
     }
   }
 
+  useEffect(() => {
+    if (!isNativeApp()) return
+    void nativePermission(false).then(setPermissionOverride).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!isNativeApp()) return
+    void syncNativeReminders(place, settings).catch(() => {})
+  }, [place, settings, dayKey])
+
   async function toggleReminders(enabled: boolean) {
     updateSettings({ ...settings, remindersEnabled: enabled })
+    if (enabled && isNativeApp()) {
+      try {
+        setPermissionOverride(await nativePermission(true))
+      } catch {
+        setPermissionOverride("unsupported")
+      }
+      return
+    }
     if (!enabled || typeof Notification === "undefined") return
     if (Notification.permission === "default") {
       const result = await Notification.requestPermission()

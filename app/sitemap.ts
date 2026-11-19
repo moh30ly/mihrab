@@ -1,14 +1,13 @@
 import type { MetadataRoute } from "next"
-import { headers } from "next/headers"
+import { SURAHS } from "@/lib/quran-index"
+import { SITE_URL } from "@/lib/site"
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const headerList = await headers()
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "localhost:3847"
-  const proto = headerList.get("x-forwarded-proto") ?? (host.includes("localhost") ? "http" : "https")
+export const dynamic = "force-static"
+
+export default function sitemap(): MetadataRoute.Sitemap {
   return [
-    {
-      url: `${proto}://${host}/`,
-      lastModified: "2026-11-19",
-    },
+    { url: `${SITE_URL}/`, lastModified: "2026-11-19" },
+    { url: `${SITE_URL}/quran/`, lastModified: "2026-11-19" },
+    ...SURAHS.map((s) => ({ url: `${SITE_URL}/quran/${s.id}/`, lastModified: "2026-11-19" })),
   ]
 }

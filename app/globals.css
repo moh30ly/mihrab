@@ -150,3 +150,24 @@
 .font-arabic {
   font-family: var(--font-amiri), "Noto Naskh Arabic", serif;
 }
+.font-quran {
+  font-family: var(--font-amiri-quran), var(--font-amiri), "Noto Naskh Arabic", serif;
+}
+
+.quran-text {
+  font-family: var(--font-amiri-quran), var(--font-amiri), "Noto Naskh Arabic", serif;
+  font-size: 1.75rem;
+  line-height: 2.4;
+  text-align: right;
+  word-spacing: 0.08em;
+}
+
+.quran-reader[data-size="0"] .quran-text { font-size: 1.4rem; }
+.quran-reader[data-size="2"] .quran-text { font-size: 2.2rem; }
+.quran-reader[data-size="3"] .quran-text { font-size: 2.75rem; }
+.quran-reader[data-translation="off"] .quran-translation { display: none; }
+
+.ayah-mark {
+  margin-inline-start: 0.35em;
+  white-space: nowrap;
+}
