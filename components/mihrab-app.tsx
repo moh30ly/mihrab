@@ -24,6 +24,7 @@ import {
 } from "@/lib/format"
 import { madhabById, methodById, PRAYER_INFO } from "@/lib/methods"
 import { isNativeApp, nativePermission, syncNativeReminders } from "@/lib/native-reminders"
+import { syncWidget } from "@/lib/widget"
 import { primeTone, sendNotification } from "@/lib/notify"
 import {
   civilKey,
@@ -244,6 +245,11 @@ export function MihrabApp() {
     if (!isNativeApp()) return
     void syncNativeReminders(place, settings).catch(() => {})
   }, [place, settings, dayKey])
+
+  useEffect(() => {
+    if (!isNativeApp() || !clientReady) return
+    void syncWidget(place, settings, locale).catch(() => {})
+  }, [place, settings, locale, dayKey, clientReady])
 
   async function toggleReminders(enabled: boolean) {
     updateSettings({ ...settings, remindersEnabled: enabled })

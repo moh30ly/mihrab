@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_small_label">下一次礼拜</string>
+    <string name="widget_large_label">礼拜时间</string>
+    <string name="widget_small_description">下一次礼拜及剩余时间。</string>
+    <string name="widget_large_description">下一次礼拜倒计时、今天的五次礼拜时间、伊斯兰历日期和今日善行。</string>
+    <string name="widget_empty">打开 Mihrab 并选择你的位置。</string>
+</resources>

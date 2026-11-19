@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_small_label">الصلاة التالية</string>
+    <string name="widget_large_label">مواقيت الصلاة</string>
+    <string name="widget_small_description">الصلاة التالية والوقت المتبقي لها.</string>
+    <string name="widget_large_description">الصلاة التالية مع عدّ تنازلي، ومواقيت الصلوات الخمس اليوم، والتاريخ الهجري، وعمل صالح لليوم.</string>
+    <string name="widget_empty">افتح محراب واختر موقعك.</string>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_small_label">Sonraki namaz</string>
+    <string name="widget_large_label">Namaz vakitleri</string>
+    <string name="widget_small_description">Sonraki namaz ve kalan süre.</string>
+    <string name="widget_large_description">Geri sayımlı sonraki namaz, bugünün beş vakti, hicri tarih ve günün iyiliği.</string>
+    <string name="widget_empty">Mihrab\'ı açın ve konumunuzu seçin.</string>
+</resources>

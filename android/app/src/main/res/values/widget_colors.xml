@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The Andalusian palette of the app (app/globals.css). -->
+    <color name="widget_oxblood">#6B2216</color>
+    <color name="widget_oxblood_deep">#3F120B</color>
+    <color name="widget_gold">#D2A24C</color>
+    <color name="widget_gold_bright">#ECC97A</color>
+    <color name="widget_cream">#F5EAD6</color>
+    <color name="widget_stone_dim">#CCF4E6C8</color>
+    <color name="widget_teal">#123F3C</color>
+</resources>

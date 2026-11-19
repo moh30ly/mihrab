@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_small_label">次の礼拝</string>
+    <string name="widget_large_label">礼拝時刻</string>
+    <string name="widget_small_description">次の礼拝とそれまでの残り時間。</string>
+    <string name="widget_large_description">次の礼拝のカウントダウン、今日の5回の礼拝、ヒジュラ暦の日付、今日の善行。</string>
+    <string name="widget_empty">Mihrab を開いて場所を選んでください。</string>
+</resources>

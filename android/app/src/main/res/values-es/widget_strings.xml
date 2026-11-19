@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_small_label">Próxima oración</string>
+    <string name="widget_large_label">Horarios de oración</string>
+    <string name="widget_small_description">La próxima oración y el tiempo que falta.</string>
+    <string name="widget_large_description">La próxima oración con cuenta atrás, las cinco oraciones de hoy, la fecha hiyri y una buena obra para el día.</string>
+    <string name="widget_empty">Abre Mihrab y elige tu ubicación.</string>
+</resources>

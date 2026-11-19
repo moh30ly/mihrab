@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_small_label">Prossima preghiera</string>
+    <string name="widget_large_label">Orari di preghiera</string>
+    <string name="widget_small_description">La prossima preghiera e il tempo che manca.</string>
+    <string name="widget_large_description">La prossima preghiera con il conto alla rovescia, le cinque preghiere di oggi, la data dell’Egira e una buona azione per il giorno.</string>
+    <string name="widget_empty">Apri Mihrab e scegli la tua posizione.</string>
+</resources>
