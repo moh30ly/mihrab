@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { BookOpenText } from "lucide-react"
 import { TasbihIcon } from "@/components/nav-icons"
 import { Frieze } from "@/components/ornament"
 import { AthkarReader } from "@/components/athkar/athkar-reader"
@@ -29,6 +30,13 @@ export default function AthkarPage() {
         >
           <TasbihIcon className="size-5" />
           <T k="Open the sibha (tasbih counter)" />
+        </Link>
+        <Link
+          href="/athkar/hisn/"
+          className="mx-1 mt-3 inline-flex h-10 items-center gap-2 rounded-full border border-gold/60 bg-card px-4 text-sm font-medium text-grove hover:bg-secondary"
+        >
+          <BookOpenText className="size-5" aria-hidden />
+          <T k="Hisn al-Muslim, the full book" />
         </Link>
       </header>
       <Frieze className="mx-auto mt-4 max-w-sm" />

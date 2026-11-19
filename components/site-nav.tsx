@@ -10,12 +10,12 @@ import { setLocale } from "@/lib/i18n/store"
 import { PALETTE as P, star8 } from "@/lib/art"
 import { cn } from "@/lib/utils"
 
-const SECTIONS = ["/qibla", "/quran", "/athkar", "/sibha", "/sadaqah"]
+const SECTIONS = ["/qibla", "/quran", "/hadith", "/athkar", "/sibha", "/sadaqah"]
 
 const LINKS = [
   { href: "/", label: "Prayer", icon: MihrabIcon, match: (p: string) => !SECTIONS.some((s) => p.startsWith(s)) },
   { href: "/qibla/", label: "Qibla", icon: QiblaIcon, match: (p: string) => p.startsWith("/qibla") },
-  { href: "/quran/", label: "Quran", icon: QuranIcon, match: (p: string) => p.startsWith("/quran") },
+  { href: "/quran/", label: "Quran", icon: QuranIcon, match: (p: string) => p.startsWith("/quran") || p.startsWith("/hadith") },
   { href: "/athkar/", label: "Athkar", icon: TasbihIcon, match: (p: string) => p.startsWith("/athkar") || p.startsWith("/sibha") },
   { href: "/sadaqah/", label: "Sadaqah", icon: GivingIcon, match: (p: string) => p.startsWith("/sadaqah") },
 ]
