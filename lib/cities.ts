@@ -2,6 +2,7 @@ import tzLookup from "tz-lookup"
 import { haversineKm } from "@/lib/prayer"
 import type { CityRecord, Place } from "@/lib/types"
 import { formatDistance } from "@/lib/format"
+import { tNow } from "@/lib/i18n/translate"
 
 type RawCity = [string, string, string, number, number, number, number]
 
@@ -147,10 +148,10 @@ export function placeFromCoordinates(
   const nearest = cities ? nearestCity(cities, latitude, longitude) : null
   const nearby = nearest && nearest.distanceKm <= 80 ? nearest : null
   return {
-    label: nearby && nearby.distanceKm <= 25 ? nearby.city.name : "Chosen coordinates",
+    label: nearby && nearby.distanceKm <= 25 ? nearby.city.name : tNow("Chosen coordinates"),
     detail: nearby
-      ? `${formatDistance(nearby.distanceKm)} from ${nearby.city.name}, ${nearby.city.countryName}`
-      : "Coordinates you entered",
+      ? tNow("{distance} from {city}, {country}", { distance: formatDistance(nearby.distanceKm), city: nearby.city.name, country: nearby.city.countryName })
+      : tNow("Coordinates you entered"),
     country: nearby ? nearby.city.country : "",
     countryName: nearby ? nearby.city.countryName : "",
     latitude,
@@ -170,14 +171,14 @@ export function placeFromDevice(
   const nearest = cities ? nearestCity(cities, latitude, longitude) : null
   const nearby = nearest && nearest.distanceKm <= 80 ? nearest : null
   const label = !nearby
-    ? "Your location"
+    ? tNow("Your location")
     : nearby.distanceKm <= 20
       ? nearby.city.name
-      : `Near ${nearby.city.name}`
+      : tNow("Near {city}", { city: nearby.city.name })
   const detail = [
     nearby ? nearby.city.countryName : null,
-    "From this device",
-    accuracy != null && accuracy > 5000 ? "approximate fix" : null,
+    tNow("From this device"),
+    accuracy != null && accuracy > 5000 ? tNow("approximate fix") : null,
   ]
     .filter(Boolean)
     .join(" · ")

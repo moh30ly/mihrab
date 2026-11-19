@@ -54,6 +54,7 @@ import {
 } from "@/lib/storage"
 import { OBLIGATORY_KEYS, PRAYER_KEYS, type DayTimes, type Place, type Settings } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { tNow, useT } from "@/lib/i18n"
 
 type Schedule =
   | { error: true }
@@ -69,6 +70,7 @@ const LEADS = [
 ] as const
 
 export function MihrabApp() {
+  const { t, locale } = useT()
   const clientReady = useSyncExternalStore(subscribeClient, getClientReady, getServerReady)
   const persisted = useSyncExternalStore(subscribePersisted, getPersistedSnapshot, getPersistedServerSnapshot)
   const deviceZone = useSyncExternalStore(subscribeClient, getDeviceZone, () => null)
@@ -167,11 +169,11 @@ export function MihrabApp() {
           }
           firedRef.current.add(storageKey)
           changed = true
-          const name = PRAYER_INFO[event.key].name
+          const name = tNow(PRAYER_INFO[event.key].name)
           const when = formatPrayerTime(event.at, current.place.timezone)
           sendNotification(
-            lead === 0 ? `It's time for ${name}` : `${name} in ${lead} minutes`,
-            `${name} at ${when} · ${current.place.label}`,
+            lead === 0 ? tNow("It's time for {name}", { name }) : tNow("{name} in {n} minutes", { name, n: lead }),
+            tNow("{name} at {time} · {place}", { name, time: when, place: current.place.label }),
             storageKey,
             current.settings.tone,
           )
@@ -266,7 +268,7 @@ export function MihrabApp() {
 
   useEffect(() => {
     if (!next || now == null) return
-    document.title = `${PRAYER_INFO[next.key].name} ${formatRemainingShort(next.at.getTime() - now)} · Mihrab`
+    document.title = `${tNow(PRAYER_INFO[next.key].name)} ${formatRemainingShort(next.at.getTime() - now)} · Mihrab`
   }, [next, now])
 
   const notice = ready && now != null ? buildNotice(times, place, settings, now) ?? extraNotice(extras, place, settings, now) : null
@@ -293,7 +295,7 @@ export function MihrabApp() {
           </p>
           <h1 className="font-display text-4xl tracking-tight text-grove sm:text-5xl">Mihrab</h1>
           <p className="mt-1 max-w-md text-sm leading-6 text-muted-foreground sm:text-base">
-            Qibla and the five daily prayers, in the time zone of where you are.
+            {t("Qibla and the five daily prayers, in the time zone of where you are.")}
           </p>
         </div>
         <p lang="ar" dir="rtl" className="font-arabic text-3xl text-grove sm:text-4xl">
@@ -308,16 +310,16 @@ export function MihrabApp() {
           <Welcome locating={locating} message={geoMessage} onLocate={() => void locate()} onSearch={() => setCityOpen(true)} />
         ) : !times ? (
           <section className="rounded-[1.75rem] border border-border bg-card p-6">
-            <h2 className="font-display text-3xl text-grove">These coordinates need another rule</h2>
+            <h2 className="font-display text-3xl text-grove">{t("These coordinates need another rule")}</h2>
             <p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">
-              Mihrab could not build a full day of prayer times here. Open Calculation and choose another high-latitude rule, or pick a nearby city.
+              {t("Mihrab could not build a full day of prayer times here. Open Calculation and choose another high-latitude rule, or pick a nearby city.")}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button type="button" className="h-11" onClick={() => setCalcOpen(true)}>
-                Open calculation
+                {t("Open calculation")}
               </Button>
               <Button type="button" variant="outline" className="h-11" onClick={() => setCityOpen(true)}>
-                Search for a city
+                {t("Search for a city")}
               </Button>
             </div>
           </section>
@@ -325,13 +327,13 @@ export function MihrabApp() {
           <div className="grid gap-4 lg:grid-cols-2">
             <section className="arch-panel px-5 py-7 sm:px-8">
               <div className="flex items-center justify-between gap-3 text-sm text-brass-bright">
-                <p>{next?.tomorrow ? "Tomorrow" : "Next prayer"}</p>
+                <p>{next?.tomorrow ? t("Tomorrow") : t("Next prayer")}</p>
                 <p className="tabular-nums">{formatClock(new Date(now), place.timezone, true)}</p>
               </div>
               <h2 className="mt-3 font-display text-6xl leading-none text-[#f6f1e6] sm:text-7xl">
-                {next ? PRAYER_INFO[next.key].name : "—"}
+                {next ? t(PRAYER_INFO[next.key].name) : "—"}
               </h2>
-              {next && (
+              {next && locale !== "ar" && (
                 <p lang="ar" dir="rtl" className="font-arabic mt-2 text-3xl text-brass-bright">
                   {PRAYER_INFO[next.key].arabic}
                 </p>
@@ -348,13 +350,13 @@ export function MihrabApp() {
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={Math.round(progress * 100)}
-                aria-label="Time until the next prayer"
+                aria-label={t("Time until the next prayer")}
               >
                 <div className="h-full rounded-full bg-brass-bright" style={{ width: `${progress * 100}%` }} />
               </div>
               {current === "fajr" && (
                 <p className="mt-4 text-sm text-[#f6f1e6]/80">
-                  Fajr remains until sunrise at {formatPrayerTime(times.today.sunrise, place.timezone)}.
+                  {t("Fajr remains until sunrise at {time}.", { time: formatPrayerTime(times.today.sunrise, place.timezone) })}
                 </p>
               )}
             </section>
@@ -369,7 +371,7 @@ export function MihrabApp() {
                     <p className="text-sm text-muted-foreground">{visibleNotice.body}</p>
                   </div>
                   <Button type="button" variant="ghost" onClick={() => setDismissed(visibleNotice.key)}>
-                    Dismiss
+                    {t("Dismiss")}
                   </Button>
                 </div>
               </div>
@@ -378,7 +380,7 @@ export function MihrabApp() {
             <section className="rounded-[1.75rem] border border-border bg-card lg:col-span-2">
               <div className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-5">
                 <div>
-                  <h2 className="font-display text-3xl text-grove">Today in {place.label}</h2>
+                  <h2 className="font-display text-3xl text-grove">{t("Today in {place}", { place: place.label })}</h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {formatGregorian(new Date(now), place.timezone)}
                     <span className="px-1.5">·</span>
@@ -395,7 +397,7 @@ export function MihrabApp() {
               </div>
               {deviceLabel && deviceZone && deviceZone !== place.timezone && (
                 <p className="border-b border-border px-4 py-3 text-sm leading-6 text-ink sm:px-5">
-                  Your device is on {deviceLabel.place} ({deviceLabel.offset}). These salah times follow {place.label} ({zone?.offset}).
+                  {t("Your device is on {device} ({deviceOffset}). These salah times follow {place} ({placeOffset}).", { device: deviceLabel.place, deviceOffset: deviceLabel.offset, place: place.label, placeOffset: zone?.offset ?? "" })}
                 </p>
               )}
               {geoMessage && (
@@ -410,10 +412,10 @@ export function MihrabApp() {
                   const isNext = next != null && !next.tomorrow && next.key === key
                   const shift = settings.adjustments[key]
                   const hint = [
-                    isCurrent ? "Now" : isNext ? "Next" : info.role,
-                    ramadan && key === "fajr" ? "Suhoor ends" : null,
-                    ramadan && key === "maghrib" ? "Iftar" : null,
-                    shift !== 0 ? `Shifted ${shift > 0 ? "+" : ""}${shift} min` : null,
+                    isCurrent ? t("Now") : isNext ? t("Next") : t(info.role),
+                    ramadan && key === "fajr" ? t("Suhoor ends") : null,
+                    ramadan && key === "maghrib" ? t("Iftar") : null,
+                    shift !== 0 ? t("Shifted {n} min", { n: `${shift > 0 ? "+" : ""}${shift}` }) : null,
                   ]
                     .filter(Boolean)
                     .join(" · ")
@@ -428,10 +430,12 @@ export function MihrabApp() {
                     >
                       <div>
                         <p className="font-display text-2xl text-grove">
-                          {info.name}{" "}
-                          <span lang="ar" dir="rtl" className="font-arabic text-xl text-brass">
-                            {info.arabic}
-                          </span>
+                          {t(info.name)}{" "}
+                          {locale !== "ar" && (
+                            <span lang="ar" dir="rtl" className="font-arabic text-xl text-brass">
+                              {info.arabic}
+                            </span>
+                          )}
                         </p>
                         <p className="text-sm text-muted-foreground">{hint}</p>
                       </div>
@@ -445,22 +449,22 @@ export function MihrabApp() {
               <DuhaLine times={times.today} timezone={place.timezone} />
               {ramadan && (
                 <p className="px-4 py-3 text-sm leading-6 text-muted-foreground sm:px-5">
-                  Ramadan, by the Umm al-Qura calendar. Suhoor ends at Fajr and iftar is at Maghrib. Local moonsighting can differ by a day.
+                  {t("Ramadan, by the Umm al-Qura calendar. Suhoor ends at Fajr and iftar is at Maghrib. Local moonsighting can differ by a day.")}
                 </p>
               )}
               {Math.abs(place.latitude) >= 48 && (
                 <p className="px-4 py-3 text-sm leading-6 text-muted-foreground sm:px-5">
-                  This far from the equator, Fajr and Isha follow the high-latitude rule in Calculation.
+                  {t("This far from the equator, Fajr and Isha follow the high-latitude rule in Calculation.")}
                 </p>
               )}
               <div className="flex flex-wrap gap-2 px-4 py-4 sm:px-5">
                 <Button type="button" variant="outline" className="h-11" onClick={() => void locate()} disabled={locating}>
                   <LocateFixed />
-                  {locating ? "Finding you…" : "Use where I am"}
+                  {locating ? t("Finding you…") : t("Use where I am")}
                 </Button>
                 <Button type="button" variant="outline" className="h-11" onClick={() => setCityOpen(true)}>
                   <Search />
-                  Search for a city
+                  {t("Search for a city")}
                 </Button>
                 <Button
                   type="button"
@@ -468,7 +472,7 @@ export function MihrabApp() {
                   className="h-11"
                   onClick={() => commitPlace(null)}
                 >
-                  Clear place
+                  {t("Clear place")}
                 </Button>
               </div>
             </section>
@@ -476,16 +480,16 @@ export function MihrabApp() {
             <section className="rounded-[1.75rem] border border-border bg-card px-4 py-5 sm:px-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="font-display text-3xl text-grove">Reminders</h2>
+                  <h2 className="font-display text-3xl text-grove">{t("Reminders")}</h2>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    While this page is open, Mihrab shows a notice at each prayer and counts down in the tab. Notifications also fire if you allow them. In the Android app they arrive even when it is closed.
+                    {t("While this page is open, Mihrab shows a notice at each prayer and counts down in the tab. Notifications also fire if you allow them. In the Android app they arrive even when it is closed.")}
                   </p>
                 </div>
                 <Switch
                   id="reminders"
                   checked={settings.remindersEnabled}
                   onCheckedChange={(checked) => void toggleReminders(checked)}
-                  aria-label="Prayer notifications"
+                  aria-label={t("Prayer notifications")}
                 />
               </div>
               <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -502,7 +506,7 @@ export function MihrabApp() {
                     )}
                     onClick={() => updateSettings({ ...settings, leadMinutes: minutes })}
                   >
-                    {label}
+                    {t(label)}
                   </button>
                 ))}
               </div>
@@ -523,12 +527,12 @@ export function MihrabApp() {
                       })
                     }
                   >
-                    {PRAYER_INFO[key].name}
+                    {t(PRAYER_INFO[key].name)}
                   </button>
                 ))}
               </div>
               <div className="mt-4 flex items-center justify-between gap-3">
-                <Label htmlFor="tone">Play a short tone</Label>
+                <Label htmlFor="tone">{t("Play a short tone")}</Label>
                 <Switch
                   id="tone"
                   checked={settings.tone}
@@ -540,32 +544,32 @@ export function MihrabApp() {
               </div>
               {settings.remindersEnabled && permission === "denied" && (
                 <p className="mt-3 text-sm leading-6 text-clay">
-                  Notifications are blocked in this browser. The countdown and the on-page notice still run while Mihrab is open.
+                  {t("Notifications are blocked in this browser. The countdown and the on-page notice still run while Mihrab is open.")}
                 </p>
               )}
               {settings.remindersEnabled && permission === "unsupported" && (
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                  This browser has no notification support. Leave the page open for the countdown and the notice.
+                  {t("This browser has no notification support. Leave the page open for the countdown and the notice.")}
                 </p>
               )}
               {settings.remindersEnabled && !OBLIGATORY_KEYS.some((key) => settings.prayers[key]) && (
-                <p className="mt-3 text-sm text-muted-foreground">Choose at least one prayer to be notified.</p>
+                <p className="mt-3 text-sm text-muted-foreground">{t("Choose at least one prayer to be notified.")}</p>
               )}
               <ExtraRemindersPanel place={place} settings={settings} onChange={updateSettings} />
             </section>
 
             <section className="rounded-[1.75rem] border border-border bg-card px-4 py-5 sm:px-5">
-              <h2 className="font-display text-3xl text-grove">Calculation</h2>
+              <h2 className="font-display text-3xl text-grove">{t("Calculation")}</h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {methodById(settings.method).name}. {madhabById(settings.madhab).name} Asr.
+                {t(methodById(settings.method).name)}. {t("{madhab} Asr", { madhab: t(madhabById(settings.madhab).name) })}.
               </p>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">{methodById(settings.method).detail}</p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{t(methodById(settings.method).detail)}</p>
               <Button type="button" variant="outline" className="mt-4 h-11" onClick={() => setCalcOpen(true)}>
-                Change method
+                {t("Change method")}
               </Button>
               <p className="mt-4 text-sm">
                 <a className="underline decoration-brass underline-offset-4" href="#how-mihrab-works">
-                  How the times are chosen
+                  {t("How the times are chosen")}
                 </a>
               </p>
             </section>
@@ -586,15 +590,16 @@ export function MihrabApp() {
 }
 
 function DuhaLine({ times, timezone }: { times: DayTimes; timezone: string }) {
+  const { t } = useT()
   const w = duhaWindow(times)
   if (!(w.end > w.start)) return null
   return (
     <p className="border-t border-border px-4 py-3 text-sm leading-6 text-muted-foreground sm:px-5">
-      <span className="font-medium text-grove">Duha</span>{" "}
+      <span className="font-medium text-grove">{t("Duha")}</span>{" "}
       <span lang="ar" dir="rtl" className="font-arabic text-brass">
         الضحى
       </span>{" "}
-      · from {formatPrayerTime(w.start, timezone)} until about {formatPrayerTime(w.end, timezone)}. A voluntary prayer of two or more rak‘ahs.
+      · {t("from {start} until about {end}. A voluntary prayer of two or more rak‘ahs.", { start: formatPrayerTime(w.start, timezone), end: formatPrayerTime(w.end, timezone) })}
     </p>
   )
 }
@@ -610,14 +615,15 @@ function Welcome({
   onLocate: () => void
   onSearch: () => void
 }) {
+  const { t } = useT()
   return (
     <section className="arch-panel px-6 py-10 text-center sm:px-12 sm:py-14">
-      <p className="text-xs tracking-[0.2em] text-brass-bright uppercase">Assalamu alaikum</p>
+      <p className="text-xs tracking-[0.2em] text-brass-bright uppercase">{t("Assalamu alaikum")}</p>
       <h2 className="mx-auto mt-3 max-w-xl font-display text-4xl leading-tight text-[#f6f1e6] sm:text-6xl">
-        The Qibla, and the salah of this place.
+        {t("The Qibla, and the salah of this place.")}
       </h2>
       <p className="mx-auto mt-4 max-w-md text-base leading-7 text-[#f6f1e6]/85">
-        Tell Mihrab where you are. It points toward the Kaaba and lays out Fajr, Dhuhr, Asr, Maghrib, and Isha in that time zone.
+        {t("Tell Mihrab where you are. It points toward the Kaaba and lays out Fajr, Dhuhr, Asr, Maghrib, and Isha in that time zone.")}
       </p>
       <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
         <Button
@@ -627,7 +633,7 @@ function Welcome({
           disabled={locating}
         >
           <LocateFixed />
-          {locating ? "Finding you…" : "Use where I am"}
+          {locating ? t("Finding you…") : t("Use where I am")}
         </Button>
         <Button
           type="button"
@@ -636,7 +642,7 @@ function Welcome({
           onClick={onSearch}
         >
           <Search />
-          Search for a city
+          {t("Search for a city")}
         </Button>
       </div>
       {message && (
@@ -645,7 +651,7 @@ function Welcome({
         </p>
       )}
       <p className="mx-auto mt-8 max-w-md text-sm leading-6 text-[#f6f1e6]/70">
-        Your coordinates stay in this browser. Nothing about where you are is sent to a server.
+        {t("Your coordinates stay in this browser. Nothing about where you are is sent to a server.")}
       </p>
     </section>
   )
@@ -658,22 +664,22 @@ function buildNotice(schedule: Extract<Schedule, { error: false }>, place: Place
   ]
   for (const event of events) {
     if (!isInsideReminderWindow(now, event.at.getTime(), 0)) continue
-    const name = PRAYER_INFO[event.key].name
+    const name = tNow(PRAYER_INFO[event.key].name)
     return {
       key: `${civilKey(place.timezone, event.at)}:${event.key}:0`,
-      title: `It's time for ${name}`,
-      body: `${name} at ${formatPrayerTime(event.at, place.timezone)} in ${place.label}.`,
+      title: tNow("It's time for {name}", { name }),
+      body: tNow("{name} at {time} in {place}.", { name, time: formatPrayerTime(event.at, place.timezone), place: place.label }),
     }
   }
   if (settings.remindersEnabled && settings.leadMinutes > 0) {
     for (const event of events) {
       if (!settings.prayers[event.key]) continue
       if (!isInsideReminderWindow(now, event.at.getTime(), settings.leadMinutes)) continue
-      const name = PRAYER_INFO[event.key].name
+      const name = tNow(PRAYER_INFO[event.key].name)
       return {
         key: `${civilKey(place.timezone, event.at)}:${event.key}:${settings.leadMinutes}`,
-        title: `${name} in ${settings.leadMinutes} minutes`,
-        body: `${name} at ${formatPrayerTime(event.at, place.timezone)} in ${place.label}.`,
+        title: tNow("{name} in {n} minutes", { name, n: settings.leadMinutes }),
+        body: tNow("{name} at {time} in {place}.", { name, time: formatPrayerTime(event.at, place.timezone), place: place.label }),
       }
     }
   }
@@ -706,12 +712,12 @@ function readDevicePosition() {
 function locationErrorMessage(error: unknown) {
   if (error instanceof GeolocationPositionError) {
     if (error.code === error.PERMISSION_DENIED) {
-      return "Location access is off in this browser. Search for your city, or enter coordinates."
+      return tNow("Location access is off in this browser. Search for your city, or enter coordinates.")
     }
     if (error.code === error.TIMEOUT) {
-      return "Finding your position took too long. Try again, or search for your city."
+      return tNow("Finding your position took too long. Try again, or search for your city.")
     }
-    return "Your position could not be read. Search for your city instead."
+    return tNow("Your position could not be read. Search for your city instead.")
   }
-  return "This browser has no location service. Search for your city, or enter coordinates."
+  return tNow("This browser has no location service. Search for your city, or enter coordinates.")
 }

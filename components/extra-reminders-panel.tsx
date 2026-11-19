@@ -7,6 +7,8 @@ import { Switch } from "@/components/ui/switch"
 import { HIJRI_MONTHS, WEEKDAYS, nextZakatDate } from "@/lib/extra-reminders"
 import { formatGregorian } from "@/lib/format"
 import type { ExtraReminders, Place, Settings } from "@/lib/types"
+import { useT } from "@/lib/i18n"
+import { intlLocale } from "@/lib/i18n/store"
 
 const selectClass =
   "h-10 rounded-xl border border-border bg-card px-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-ring"
@@ -20,6 +22,7 @@ export function ExtraRemindersPanel({
   settings: Settings
   onChange: (next: Settings) => void
 }) {
+  const { t } = useT()
   const x = settings.extras
   const set = (patch: Partial<ExtraReminders>) => onChange({ ...settings, extras: { ...x, ...patch } })
   const nextZakat = useMemo(
@@ -29,15 +32,15 @@ export function ExtraRemindersPanel({
 
   return (
     <div className="mt-5 border-t border-border pt-4">
-      <h3 className="font-heading text-xl text-grove">Also remind me</h3>
+      <h3 className="font-heading text-xl text-grove">{t("Also remind me")}</h3>
       <ul className="mt-2 divide-y divide-border">
-        <Row id="duha" label="Duha prayer" hint="About 20 minutes after sunrise." checked={x.duha} onChange={(v) => set({ duha: v })} />
+        <Row id="duha" label={t("Duha prayer")} hint={t("About 20 minutes after sunrise.")} checked={x.duha} onChange={(v) => set({ duha: v })} />
         <Row
           id="athkar-morning"
-          label="Morning athkar"
+          label={t("Morning athkar")}
           hint={
             <>
-              20 minutes after Fajr. <Link className="underline underline-offset-2" href="/athkar/">Read them</Link>
+              {t("20 minutes after Fajr.")} <Link className="underline underline-offset-2" href="/athkar/">{t("Read them")}</Link>
             </>
           }
           checked={x.athkarMorning}
@@ -45,22 +48,22 @@ export function ExtraRemindersPanel({
         />
         <Row
           id="athkar-evening"
-          label="Evening athkar"
-          hint="20 minutes after Asr."
+          label={t("Evening athkar")}
+          hint={t("20 minutes after Asr.")}
           checked={x.athkarEvening}
           onChange={(v) => set({ athkarEvening: v })}
         />
-        <Row id="sadaqah" label="Weekly sadaqah" hint="At 10:00 on the day you choose." checked={x.sadaqah} onChange={(v) => set({ sadaqah: v })}>
+        <Row id="sadaqah" label={t("Weekly sadaqah")} hint={t("At 10:00 on the day you choose.")} checked={x.sadaqah} onChange={(v) => set({ sadaqah: v })}>
           {x.sadaqah ? (
             <select
-              aria-label="Sadaqah day"
+              aria-label={t("Sadaqah day")}
               className={selectClass}
               value={x.sadaqahDay}
               onChange={(e) => set({ sadaqahDay: Number(e.target.value) })}
             >
               {WEEKDAYS.map((d, i) => (
                 <option key={d} value={i}>
-                  {d}
+                  {weekdayName(i)}
                 </option>
               ))}
             </select>
@@ -68,15 +71,15 @@ export function ExtraRemindersPanel({
         </Row>
         <Row
           id="zakat"
-          label="Yearly zakat"
-          hint="On the Hijri date your zakat year (hawl) ends, at 10:00."
+          label={t("Yearly zakat")}
+          hint={t("On the Hijri date your zakat year (hawl) ends, at 10:00.")}
           checked={x.zakat}
           onChange={(v) => set({ zakat: v })}
         >
           {x.zakat ? (
             <div className="flex flex-wrap items-center gap-2">
               <select
-                aria-label="Zakat day"
+                aria-label={t("Zakat day")}
                 className={selectClass}
                 value={x.zakatDay}
                 onChange={(e) => set({ zakatDay: Number(e.target.value) })}
@@ -88,29 +91,34 @@ export function ExtraRemindersPanel({
                 ))}
               </select>
               <select
-                aria-label="Zakat month"
+                aria-label={t("Zakat month")}
                 className={selectClass}
                 value={x.zakatMonth}
                 onChange={(e) => set({ zakatMonth: Number(e.target.value) })}
               >
                 {HIJRI_MONTHS.map((m, i) => (
                   <option key={m} value={i + 1}>
-                    {m}
+                    {t(m)}
                   </option>
                 ))}
               </select>
               {nextZakat ? (
-                <span className="text-sm text-muted-foreground">Next: {formatGregorian(nextZakat, place.timezone)}</span>
+                <span className="text-sm text-muted-foreground">{t("Next: {date}", { date: formatGregorian(nextZakat, place.timezone) })}</span>
               ) : null}
             </div>
           ) : null}
         </Row>
       </ul>
       {!settings.remindersEnabled && (x.duha || x.athkarMorning || x.athkarEvening || x.sadaqah || x.zakat) ? (
-        <p className="mt-2 text-sm text-muted-foreground">Turn on reminders above for these to arrive.</p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("Turn on reminders above for these to arrive.")}</p>
       ) : null}
     </div>
   )
+}
+
+function weekdayName(day: number) {
+  // 2023-01-01 was a Sunday.
+  return new Intl.DateTimeFormat(intlLocale(), { weekday: "long", timeZone: "UTC" }).format(new Date(Date.UTC(2023, 0, 1 + day)))
 }
 
 function Row({

@@ -1,6 +1,7 @@
 // Reminders beyond the five prayers: Duha, the morning and evening athkar,
 // a weekly sadaqah nudge, and a yearly zakat date on the Hijri calendar.
 import { formatPrayerTime } from "@/lib/format"
+import { tNow } from "@/lib/i18n/translate"
 import { civilParts, dayTimes, timesAreOrdered, validDate } from "@/lib/prayer"
 import type { DayTimes, Place, Settings } from "@/lib/types"
 
@@ -119,23 +120,23 @@ export function extraEventsForDay(place: Place, settings: Settings, offset: numb
   if (times && x.duha) {
     const w = duhaWindow(times)
     if (validDate(w.start) && w.end > w.start) {
-      out.push({ key: "duha", at: w.start, title: "Time for Duha", body: `Duha can be prayed until about ${at(w.end)} · ${place.label}` })
+      out.push({ key: "duha", at: w.start, title: tNow("Time for Duha"), body: tNow("Duha can be prayed until about {time} · {place}", { time: at(w.end), place: place.label }) })
     }
   }
   if (times && x.athkarMorning) {
     out.push({
       key: "athkarMorning",
       at: new Date(times.fajr.getTime() + ATHKAR_AFTER_PRAYER_MIN * MIN),
-      title: "Morning athkar",
-      body: "Take a few minutes for the morning remembrances.",
+      title: tNow("Morning athkar"),
+      body: tNow("Take a few minutes for the morning remembrances."),
     })
   }
   if (times && x.athkarEvening) {
     out.push({
       key: "athkarEvening",
       at: new Date(times.asr.getTime() + ATHKAR_AFTER_PRAYER_MIN * MIN),
-      title: "Evening athkar",
-      body: "Take a few minutes for the evening remembrances.",
+      title: tNow("Evening athkar"),
+      body: tNow("Take a few minutes for the evening remembrances."),
     })
   }
   if (x.sadaqah) {
@@ -144,8 +145,8 @@ export function extraEventsForDay(place: Place, settings: Settings, offset: numb
       out.push({
         key: "sadaqah",
         at: zonedTime(place.timezone, c.year, c.month, c.day, DAY_REMINDER_HOUR),
-        title: "A reminder to give sadaqah",
-        body: "Even a small charity given regularly is beloved to Allah.",
+        title: tNow("A reminder to give sadaqah"),
+        body: tNow("Even a small charity given regularly is beloved to Allah."),
       })
     }
   }
@@ -159,7 +160,10 @@ export function zakatEvent(place: Place, settings: Settings, now = new Date()): 
   return {
     key: "zakat",
     at,
-    title: "Your zakat is due",
-    body: `Your zakat year ends on ${settings.extras.zakatDay} ${HIJRI_MONTHS[settings.extras.zakatMonth - 1]}. Work out what you owe and pay it.`,
+    title: tNow("Your zakat is due"),
+    body: tNow("Your zakat year ends on {day} {month}. Work out what you owe and pay it.", {
+      day: settings.extras.zakatDay,
+      month: tNow(HIJRI_MONTHS[settings.extras.zakatMonth - 1]),
+    }),
   }
 }

@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch"
 import { LAST_READ_KEY, QURAN_PREFS_KEY } from "@/lib/quran-index"
 import { TRANSLATIONS, translationByCode } from "@/lib/translations"
 import { cn } from "@/lib/utils"
+import { useT } from "@/lib/i18n"
 
 type Verse = { number: number; arabic: string; english: string }
 type Prefs = { translation: boolean; size: number; lang: string }
@@ -40,6 +41,7 @@ function arabicNumber(n: number) {
 }
 
 export function SurahReader({ surahId, verses, bismillah }: { surahId: number; verses: Verse[]; bismillah: string | null }) {
+  const { t } = useT()
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS)
   const [loaded, setLoaded] = useState<{ key: string; texts: (string | null)[] } | null>(null)
   const [failed, setFailed] = useState<string | null>(null)
@@ -115,10 +117,10 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
             onCheckedChange={(checked) => update({ ...prefs, translation: checked })}
           />
           <Label htmlFor="show-translation" className="sr-only">
-            Show translation
+            {t("Show translation")}
           </Label>
           <select
-            aria-label="Translation language"
+            aria-label={t("Translation language")}
             value={prefs.lang}
             onChange={(e) => update({ ...prefs, lang: e.target.value, translation: true })}
             className="h-9 max-w-40 rounded-full border border-border bg-card px-3 text-sm text-ink"
@@ -130,7 +132,7 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
             ))}
           </select>
         </div>
-        <div role="group" aria-label="Arabic text size" className="flex gap-1">
+        <div role="group" aria-label={t("Arabic text size")} className="flex gap-1">
           {SIZES.map((label, i) => (
             <button
               key={label}
@@ -149,11 +151,11 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
       </div>
       {prefs.translation ? (
         <p className="mt-3 px-1 text-xs text-muted-foreground">
-          {info.language}: {info.title}.{" "}
+          {t(info.language)}: {info.title}.{" "}
           <a className="underline underline-offset-2" href={info.sourceUrl} rel="noopener">
             {info.source}
           </a>
-          {failed === key ? " · This translation could not be loaded. Showing English." : loading ? " · Loading…" : ""}
+          {failed === key ? ` · ${t("This translation could not be loaded. Showing English.")}` : loading ? ` · ${t("Loading…")}` : ""}
         </p>
       ) : null}
 
@@ -169,7 +171,7 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
             <li key={v.number} id={`ayah-${v.number}`} data-ayah={v.number} className="scroll-mt-28 py-5">
               <p lang="ar" dir="rtl" className="quran-text text-ink">
                 {v.arabic}
-                <span className="ayah-mark text-brass" aria-label={`Ayah ${v.number}`}>
+                <span className="ayah-mark text-brass" aria-label={t("Ayah {n}", { n: v.number })}>
                   {"۝"}
                   {arabicNumber(v.number)}
                 </span>

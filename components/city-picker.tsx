@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { useT } from "@/lib/i18n"
 
 export function CityPicker({
   open,
@@ -29,6 +30,7 @@ export function CityPicker({
   onOpenChange: (open: boolean) => void
   onSelect: (place: Place) => void
 }) {
+  const { t } = useT()
   const [cities, setCities] = useState<CityRecord[] | null>(null)
   const [failed, setFailed] = useState(false)
   const [query, setQuery] = useState("")
@@ -68,7 +70,7 @@ export function CityPicker({
     const lat = Number(latitude)
     const lng = Number(longitude)
     if (!Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lng) || lng < -180 || lng > 180) {
-      setCoordError("Enter a latitude from -90 to 90 and a longitude from -180 to 180.")
+      setCoordError(t("Enter a latitude from -90 to 90 and a longitude from -180 to 180."))
       return
     }
     setCoordError(null)
@@ -80,31 +82,31 @@ export function CityPicker({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[min(720px,88vh)] flex-col gap-3 overflow-hidden sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display text-2xl">Choose a city</DialogTitle>
+          <DialogTitle className="font-display text-2xl">{t("Choose a city")}</DialogTitle>
           <DialogDescription>
-            Prayer times follow that city’s time zone. The search stays on this device.
+            {t("Prayer times follow that city’s time zone. The search stays on this device.")}
           </DialogDescription>
         </DialogHeader>
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Makkah, Chicago, Jakarta…"
-          aria-label="Search cities"
+          aria-label={t("Search cities")}
           className="h-11 text-base md:text-base"
           autoFocus
         />
         <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-border">
           {failed && (
-            <p className="p-4 text-sm text-clay">The city list did not load. Enter coordinates below.</p>
+            <p className="p-4 text-sm text-clay">{t("The city list did not load. Enter coordinates below.")}</p>
           )}
-          {!failed && !cities && <p className="p-4 text-sm text-muted-foreground">Loading cities…</p>}
+          {!failed && !cities && <p className="p-4 text-sm text-muted-foreground">{t("Loading cities…")}</p>}
           {cities && results.length === 0 && (
             <p className="p-4 text-sm text-muted-foreground">
-              No city matches “{query.trim()}”. Try another spelling, or enter coordinates below.
+              {t("No city matches “{query}”. Try another spelling, or enter coordinates below.", { query: query.trim() })}
             </p>
           )}
           {cities && query.trim().length < 2 && results.length > 0 && (
-            <p className="px-3 pt-3 text-xs tracking-[0.14em] text-brass uppercase">Start with a city</p>
+            <p className="px-3 pt-3 text-xs tracking-[0.14em] text-brass uppercase">{t("Start with a city")}</p>
           )}
           <ul>
             {results.map((city) => {
@@ -113,7 +115,7 @@ export function CityPicker({
                 <li key={`${city.country}-${city.name}-${city.latitude}`}>
                   <button
                     type="button"
-                    className="flex w-full items-baseline justify-between gap-3 border-b border-border px-3 py-3 text-left last:border-b-0 hover:bg-accent"
+                    className="flex w-full items-baseline justify-between gap-3 border-b border-border px-3 py-3 text-start last:border-b-0 hover:bg-accent"
                     onClick={() => choose(city)}
                   >
                     <span>
@@ -133,22 +135,22 @@ export function CityPicker({
           </ul>
         </div>
         <form onSubmit={submitCoordinates} className="grid gap-2">
-          <p className="text-sm font-medium">Or enter coordinates</p>
+          <p className="text-sm font-medium">{t("Or enter coordinates")}</p>
           <div className="grid grid-cols-2 gap-2">
             <Input
               inputMode="decimal"
               value={latitude}
               onChange={(event) => setLatitude(event.target.value)}
-              placeholder="Latitude"
-              aria-label="Latitude"
+              placeholder={t("Latitude")}
+              aria-label={t("Latitude")}
               className="h-11 text-base md:text-base"
             />
             <Input
               inputMode="decimal"
               value={longitude}
               onChange={(event) => setLongitude(event.target.value)}
-              placeholder="Longitude"
-              aria-label="Longitude"
+              placeholder={t("Longitude")}
+              aria-label={t("Longitude")}
               className="h-11 text-base md:text-base"
             />
           </div>
@@ -158,7 +160,7 @@ export function CityPicker({
             </p>
           )}
           <Button type="submit" variant="outline" className="h-11">
-            Use these coordinates
+            {t("Use these coordinates")}
           </Button>
         </form>
       </DialogContent>

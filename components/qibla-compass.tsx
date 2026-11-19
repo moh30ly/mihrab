@@ -3,6 +3,7 @@
 import { cardinal, normalizeBearing, turnToward } from "@/lib/prayer"
 import { useCompass } from "@/components/use-compass"
 import { Button } from "@/components/ui/button"
+import { useT } from "@/lib/i18n"
 
 const SIZE = 292
 const CENTER = SIZE / 2
@@ -21,18 +22,19 @@ export function QiblaCompass({
   distanceLabel: string
 }) {
   const { heading, status, requestAccess } = useCompass()
+  const { t } = useT()
   const dial = heading == null ? 0 : -heading
   const rounded = Math.round(normalizeBearing(bearing))
   const direction = cardinal(bearing)
   const turn = heading == null ? null : turnToward(bearing, heading)
   const facing =
     turn == null
-      ? `North is at the top. The Qibla is ${rounded}° ${direction}.`
+      ? t("North is at the top. The Qibla is {deg}° {dir}.", { deg: rounded, dir: t(direction) })
       : Math.abs(turn) < 4
-        ? "You are facing the Qibla."
+        ? t("You are facing the Qibla.")
         : turn > 0
-          ? `Turn right ${Math.round(turn)}°.`
-          : `Turn left ${Math.round(Math.abs(turn))}°.`
+          ? t("Turn right {deg}°.", { deg: Math.round(turn) })
+          : t("Turn left {deg}°.", { deg: Math.round(Math.abs(turn)) })
 
   const ticks = []
   for (let degree = 0; degree < 360; degree += 5) {
@@ -55,15 +57,15 @@ export function QiblaCompass({
   return (
     <section className="rounded-[1.75rem] border border-border bg-card px-4 py-5 shadow-[0_1px_0_rgba(20,53,43,0.04)] sm:px-6">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="font-display text-2xl text-grove">Qibla</h2>
-        <p className="text-sm text-muted-foreground">{distanceLabel} to the Kaaba</p>
+        <h2 className="font-display text-2xl text-grove">{t("Qibla")}</h2>
+        <p className="text-sm text-muted-foreground">{t("{distance} to the Kaaba", { distance: distanceLabel })}</p>
       </div>
       <div className="mt-4 flex justify-center">
         <svg
           viewBox={`0 0 ${SIZE} ${SIZE}`}
           className="w-full max-w-[320px]"
           role="img"
-          aria-label={`${facing} ${distanceLabel} to the Kaaba.`}
+          aria-label={`${facing} ${t("{distance} to the Kaaba", { distance: distanceLabel })}.`}
         >
           <circle cx={CENTER} cy={CENTER} r={RADIUS + 8} fill="#f7f1e6" stroke="#14352b" strokeWidth="1.25" />
           <g
@@ -83,7 +85,7 @@ export function QiblaCompass({
                   fontSize={label === "N" ? 16 : 13}
                   fontFamily="Georgia, serif"
                 >
-                  {label}
+                  {t(label)}
                 </text>
               )
             })}
@@ -108,28 +110,28 @@ export function QiblaCompass({
         </svg>
       </div>
       <p className="text-center font-display text-4xl text-grove tabular-nums">
-        {rounded}° <span className="text-2xl text-brass">{direction}</span>
+        {rounded}° <span className="text-2xl text-brass">{t(direction)}</span>
       </p>
       <p className="mx-auto mt-2 max-w-sm text-center text-sm leading-6 text-muted-foreground">{facing}</p>
       {status === "needs-permission" && (
         <div className="mt-4 flex justify-center">
           <Button type="button" className="h-11 px-4" onClick={() => void requestAccess()}>
-            Use the phone compass
+            {t("Use the phone compass")}
           </Button>
         </div>
       )}
       {status === "denied" && (
         <p className="mt-3 text-center text-sm text-clay">
-          Compass access is off. The dial keeps north at the top.
+          {t("Compass access is off. The dial keeps north at the top.")}
         </p>
       )}
       {status === "unavailable" && (
         <p className="mt-3 text-center text-sm text-muted-foreground">
-          This device has no compass reading. North stays at the top.
+          {t("This device has no compass reading. North stays at the top.")}
         </p>
       )}
       {status === "live" && (
-        <p className="mt-3 text-center text-sm text-muted-foreground">Hold the phone flat, away from metal.</p>
+        <p className="mt-3 text-center text-sm text-muted-foreground">{t("Hold the phone flat, away from metal.")}</p>
       )}
     </section>
   )
