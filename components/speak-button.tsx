@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Square, Volume2 } from "lucide-react"
-import { speakArabic, stopSpeaking } from "@/lib/speak"
+import { NoArabicVoiceError, isNativeSpeech, openVoiceInstall, speakArabic, stopSpeaking } from "@/lib/speak"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 
@@ -12,7 +12,7 @@ let stopCurrent: (() => void) | null = null
 export function SpeakButton({ text, className }: { text: string; className?: string }) {
   const { t } = useT()
   const [playing, setPlaying] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [failed, setFailed] = useState<"no-voice" | "error" | null>(null)
 
   useEffect(() => () => {
     if (stopCurrent && playing) void stopSpeaking()
@@ -28,12 +28,12 @@ export function SpeakButton({ text, className }: { text: string; className?: str
     stopCurrent?.()
     const stop = () => setPlaying(false)
     stopCurrent = stop
-    setFailed(false)
+    setFailed(null)
     setPlaying(true)
     try {
       await speakArabic(text)
-    } catch {
-      setFailed(true)
+    } catch (e) {
+      setFailed(e instanceof NoArabicVoiceError ? "no-voice" : "error")
     } finally {
       if (stopCurrent === stop) stopCurrent = null
       setPlaying(false)
@@ -52,8 +52,17 @@ export function SpeakButton({ text, className }: { text: string; className?: str
         {playing ? t("Stop") : t("Listen")}
       </button>
       {failed ? (
-        <span className="text-xs text-muted-foreground">
-          {t("No Arabic voice found. Add Arabic in your phone's text-to-speech settings.")}
+        <span className="text-xs text-muted-foreground" role="status">
+          {failed === "error"
+            ? t("The voice couldn't play this. Please try again.")
+            : isNativeSpeech()
+              ? t("No Arabic voice found. Add Arabic in your phone's text-to-speech settings.")
+              : t("This browser has no Arabic voice. Try Microsoft Edge or Chrome on your phone, or add an Arabic voice in your device's speech settings.")}
+          {failed === "no-voice" && isNativeSpeech() ? (
+            <button type="button" onClick={() => void openVoiceInstall()} className="ms-2 underline text-grove">
+              {t("Install voice")}
+            </button>
+          ) : null}
         </span>
       ) : null}
     </span>
