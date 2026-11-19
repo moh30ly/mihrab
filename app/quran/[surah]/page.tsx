@@ -15,17 +15,13 @@ export function generateStaticParams() {
 
 const BISMILLAH = "بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ"
 
-function arabicNumber(n: number) {
-  return n.toLocaleString("ar-EG", { useGrouping: false })
-}
-
 export async function generateMetadata({ params }: PageProps<"/quran/[surah]">): Promise<Metadata> {
   const { surah } = await params
   const info = surahById(Number(surah))
   if (!info) return {}
   return {
     title: `Surah ${info.transliteration} (${info.name}) — ${info.translation}`,
-    description: `Read Surah ${info.transliteration}, ${info.translation}, surah ${info.id} of the Quran with ${info.verses} ayahs, in Arabic with the Saheeh International English meaning.`,
+    description: `Read Surah ${info.transliteration}, ${info.translation}, surah ${info.id} of the Quran with ${info.verses} ayahs, in Arabic with translations in English, Arabic (Tafsir al-Muyassar), German, Italian, Chinese, Japanese, Turkish, Portuguese and Spanish.`,
     alternates: { canonical: `/quran/${info.id}/` },
   }
 }
@@ -61,32 +57,7 @@ export default async function SurahPage({ params }: PageProps<"/quran/[surah]">)
         </h1>
       </header>
 
-      <SurahReader surahId={id}>
-        {showBismillah ? (
-          <p lang="ar" dir="rtl" className="quran-text py-6 text-center text-grove">
-            {BISMILLAH}
-          </p>
-        ) : null}
-        <ol className="divide-y divide-border">
-          {verses.map((v) => (
-            <li key={v.number} id={`ayah-${v.number}`} data-ayah={v.number} className="scroll-mt-20 py-5">
-              <p lang="ar" dir="rtl" className="quran-text text-ink">
-                {v.arabic}
-                <span className="ayah-mark text-brass" aria-label={`Ayah ${v.number}`}>
-                  {"۝"}
-                  {arabicNumber(v.number)}
-                </span>
-              </p>
-              <p className="quran-translation mt-3 text-base leading-7 text-muted-foreground">
-                <a href={`#ayah-${v.number}`} className="mr-2 font-medium text-brass tabular-nums">
-                  {info.id}:{v.number}
-                </a>
-                {v.english}
-              </p>
-            </li>
-          ))}
-        </ol>
-      </SurahReader>
+      <SurahReader surahId={id} verses={verses} bismillah={showBismillah ? BISMILLAH : null} />
 
       <nav aria-label="Surahs" className="mt-8 flex items-center justify-between gap-3">
         {prev ? (

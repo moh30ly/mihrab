@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: `${SITE_URL}/`, lastModified: "2026-11-19" },
     { url: `${SITE_URL}/quran/`, lastModified: "2026-11-19" },
+    { url: `${SITE_URL}/athkar/`, lastModified: "2026-11-19" },
     ...SURAHS.map((s) => ({ url: `${SITE_URL}/quran/${s.id}/`, lastModified: "2026-11-19" })),
   ]
 }

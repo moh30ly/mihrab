@@ -3,6 +3,7 @@
 // On the Android app the WebView has no Notification API and stops when closed,
 // so reminders are scheduled as native local notifications for the coming days.
 import { Capacitor } from "@capacitor/core"
+import { extraEventsForDay, zakatEvent, type ExtraKey } from "@/lib/extra-reminders"
 import { formatPrayerTime } from "@/lib/format"
 import { PRAYER_INFO } from "@/lib/methods"
 import { dayTimes, timesAreOrdered, validDate } from "@/lib/prayer"
@@ -28,10 +29,14 @@ export async function nativePermission(request: boolean): Promise<NotificationPe
   return status.display === "granted" ? "granted" : status.display === "denied" ? "denied" : "default"
 }
 
+const EXTRA_SLOT: Record<ExtraKey, number> = { duha: 60, athkarMorning: 61, athkarEvening: 62, sadaqah: 63, zakat: 0 }
+const ZAKAT_ID = 5000
+
 export type NativeReminder = { id: number; at: Date; title: string; body: string }
 
 export function buildNativeReminders(place: Place, settings: Settings, now = new Date()): NativeReminder[] {
   if (!settings.remindersEnabled) return []
+  const soon = now.getTime() + 5_000
   const leads = settings.leadMinutes > 0 ? [settings.leadMinutes, 0] : [0]
   const out: NativeReminder[] = []
   for (let day = 0; day < NATIVE_DAYS_AHEAD; day++) {
@@ -53,7 +58,13 @@ export function buildNativeReminders(place: Place, settings: Settings, now = new
         })
       })
     })
+    for (const e of extraEventsForDay(place, settings, day, now)) {
+      if (e.at.getTime() <= soon) continue
+      out.push({ id: 1000 + day * 100 + EXTRA_SLOT[e.key], at: e.at, title: e.title, body: e.body })
+    }
   }
+  const zakat = zakatEvent(place, settings, now)
+  if (zakat && zakat.at.getTime() > soon) out.push({ id: ZAKAT_ID, at: zakat.at, title: zakat.title, body: zakat.body })
   return out
 }
 

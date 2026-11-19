@@ -44,6 +44,19 @@ export type PrayerAdjustments = Record<PrayerKey, number>
 
 export type PrayerToggles = Record<ObligatoryKey, boolean>
 
+export type ExtraReminders = {
+  duha: boolean
+  athkarMorning: boolean
+  athkarEvening: boolean
+  sadaqah: boolean
+  /** 0 = Sunday … 6 = Saturday */
+  sadaqahDay: number
+  zakat: boolean
+  /** Hijri month 1–12 and day 1–30 of the zakat year (hawl). */
+  zakatMonth: number
+  zakatDay: number
+}
+
 export type Settings = {
   method: MethodId
   methodCustom: boolean
@@ -55,6 +68,7 @@ export type Settings = {
   leadMinutes: 0 | 5 | 10 | 15
   prayers: PrayerToggles
   tone: boolean
+  extras: ExtraReminders
 }
 
 export type PlaceSource = "device" | "city" | "coordinates"

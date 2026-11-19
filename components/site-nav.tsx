@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BookOpen, Compass } from "lucide-react"
+import { BookOpen, Compass, HandHeart } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const LINKS = [
-  { href: "/", label: "Prayer & Qibla", icon: Compass, match: (p: string) => !p.startsWith("/quran") },
+  { href: "/", label: "Prayer", icon: Compass, match: (p: string) => !p.startsWith("/quran") && !p.startsWith("/athkar") },
   { href: "/quran/", label: "Quran", icon: BookOpen, match: (p: string) => p.startsWith("/quran") },
+  { href: "/athkar/", label: "Athkar", icon: HandHeart, match: (p: string) => p.startsWith("/athkar") },
 ]
 
 export function SiteNav() {
@@ -27,7 +28,7 @@ export function SiteNav() {
                   href={href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-medium transition-colors",
+                    "inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors sm:px-4",
                     active ? "bg-grove text-[#f6f1e6]" : "text-ink hover:bg-secondary",
                   )}
                 >

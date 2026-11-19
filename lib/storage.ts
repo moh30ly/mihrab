@@ -40,6 +40,36 @@ export const DEFAULT_SETTINGS: Settings = {
     isha: true,
   },
   tone: false,
+  extras: {
+    duha: false,
+    athkarMorning: false,
+    athkarEvening: false,
+    sadaqah: false,
+    sadaqahDay: 5,
+    zakat: false,
+    zakatMonth: 9,
+    zakatDay: 1,
+  },
+}
+
+function intIn(value: unknown, min: number, max: number, fallback: number) {
+  return typeof value === "number" && Number.isInteger(value) && value >= min && value <= max ? value : fallback
+}
+
+function loadExtras(value: unknown): Settings["extras"] {
+  const base = DEFAULT_SETTINGS.extras
+  if (!value || typeof value !== "object") return base
+  const v = value as Partial<Settings["extras"]>
+  return {
+    duha: Boolean(v.duha),
+    athkarMorning: Boolean(v.athkarMorning),
+    athkarEvening: Boolean(v.athkarEvening),
+    sadaqah: Boolean(v.sadaqah),
+    sadaqahDay: intIn(v.sadaqahDay, 0, 6, base.sadaqahDay),
+    zakat: Boolean(v.zakat),
+    zakatMonth: intIn(v.zakatMonth, 1, 12, base.zakatMonth),
+    zakatDay: intIn(v.zakatDay, 1, 30, base.zakatDay),
+  }
 }
 
 function readJson(key: string): unknown {
@@ -143,6 +173,7 @@ export function loadSettings(): Settings {
     leadMinutes,
     prayers,
     tone: Boolean(stored.tone),
+    extras: loadExtras(stored.extras),
   }
 }
 
