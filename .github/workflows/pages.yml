@@ -28,6 +28,13 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      # Tafsir and hadith files, fetched on demand by the site and the Android app.
+      - uses: actions/cache@v4
+        with:
+          path: .cache/library
+          key: library-${{ hashFiles('scripts/fetch-library.mjs', 'lib/tafsir.ts', 'lib/hadith.ts') }}
+          restore-keys: library-
+      - run: node scripts/fetch-library.mjs out
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main'
         with:

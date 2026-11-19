@@ -27,6 +27,18 @@ export function QuranSources() {
         mirror. Translations render the meaning; only the Arabic is the Quran.
       </p>
       <p>
+        Tafsir: al-Mukhtasar by the Tafsir Center for Quranic Studies (Arabic, English, Italian, Spanish, Turkish, Chinese and
+        Japanese), and in Arabic Tafsir al-Sa‘di, Tafsir Ibn Kathir, Tafsir al-Jalalayn and Tafsir al-Baghawi, from the{" "}
+        <a className="underline underline-offset-2" href="https://qul.tarteel.ai/resources/tafsir" rel="noopener">
+          Quranic Universal Library
+        </a>{" "}
+        through the{" "}
+        <a className="underline underline-offset-2" href="https://github.com/spa5k/tafsir_api" rel="noopener">
+          tafsir_api
+        </a>{" "}
+        dataset. The commentaries are shown as published and are loaded only when you open one.
+      </p>
+      <p>
         {QURAN_SOURCES.dataset}{" "}
         <a className="underline underline-offset-2" href="https://github.com/risan/quran-json" rel="noopener">
           github.com/risan/quran-json

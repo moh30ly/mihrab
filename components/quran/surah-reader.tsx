@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { BookOpenText } from "lucide-react"
+import { TafsirSheet } from "@/components/quran/tafsir-sheet"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { LAST_READ_KEY, QURAN_PREFS_KEY } from "@/lib/quran-index"
@@ -45,6 +47,7 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS)
   const [loaded, setLoaded] = useState<{ key: string; texts: (string | null)[] } | null>(null)
   const [failed, setFailed] = useState<string | null>(null)
+  const [tafsirAyah, setTafsirAyah] = useState<number | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -193,10 +196,27 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
                     ? `↑ ${surahId}:${sharedFrom(i)}`
                     : translated}
               </p>
+              <button
+                type="button"
+                onClick={() => setTafsirAyah(v.number)}
+                aria-label={t("Tafsir of ayah {n}", { n: `${surahId}:${v.number}` })}
+                className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-full px-2 text-sm text-brass hover:bg-secondary"
+              >
+                <BookOpenText className="size-4" aria-hidden />
+                {t("Tafsir")}
+              </button>
             </li>
           )
         })}
       </ol>
+      <TafsirSheet
+        surahId={surahId}
+        ayahCount={verses.length}
+        ayah={tafsirAyah}
+        arabic={tafsirAyah ? verses[tafsirAyah - 1]?.arabic ?? null : null}
+        onAyahChange={setTafsirAyah}
+        onClose={() => setTafsirAyah(null)}
+      />
     </div>
   )
 }

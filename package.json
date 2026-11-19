@@ -7,10 +7,11 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1 --port 3847",
     "lint": "eslint",
-    "test": "tsx --test lib/prayer.test.ts lib/reminders.test.ts lib/native-reminders.test.ts lib/extra-reminders.test.ts lib/zakat.test.ts lib/duas.test.ts lib/sibha.test.ts lib/good-deeds.test.ts",
+    "test": "tsx --test lib/prayer.test.ts lib/reminders.test.ts lib/native-reminders.test.ts lib/extra-reminders.test.ts lib/zakat.test.ts lib/duas.test.ts lib/sibha.test.ts lib/good-deeds.test.ts lib/hadith.test.ts lib/tafsir.test.ts",
     "android": "next build && cap sync android && cap open android",
     "android:sync": "next build && cap sync android",
-    "quran:import": "node scripts/import-quran.mjs"
+    "quran:import": "node scripts/import-quran.mjs",
+    "library:fetch": "node scripts/fetch-library.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
