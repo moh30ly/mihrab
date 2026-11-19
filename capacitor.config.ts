@@ -4,7 +4,7 @@ const config: CapacitorConfig = {
   appId: "live.mihrab.app",
   appName: "Mihrab",
   webDir: "out",
-  backgroundColor: "#14352b",
+  backgroundColor: "#6b2216",
   android: {
     allowMixedContent: false,
   },

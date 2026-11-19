@@ -109,7 +109,7 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
 
   return (
     <div ref={ref} data-size={prefs.size} data-translation={prefs.translation ? "on" : "off"} className="quran-reader mt-6">
-      <div className="sticky top-14 z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-[1.5rem] border border-border bg-card/95 px-4 py-2 backdrop-blur">
+      <div className="sticky top-14 z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-[1.5rem] border border-gold/50 bg-card/95 shadow-sm px-4 py-2 backdrop-blur">
         <div className="flex items-center gap-2">
           <Switch
             id="show-translation"

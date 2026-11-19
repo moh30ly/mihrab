@@ -64,7 +64,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#14352b",
+  themeColor: "#6b2216",
   width: "device-width",
   initialScale: 1,
 }
@@ -75,7 +75,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${outfit.variable} ${fraunces.variable} ${amiri.variable} ${amiriQuran.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="pb-nav flex min-h-full flex-col">
         <SiteNav />
         {children}
       </body>

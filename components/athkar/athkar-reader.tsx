@@ -64,7 +64,7 @@ export function AthkarReader({ morning, evening }: { morning: Dhikr[]; evening: 
 
   return (
     <div className="mt-6">
-      <div className="sticky top-14 z-20 flex flex-wrap items-center justify-between gap-2 rounded-[1.5rem] border border-border bg-card/95 p-1.5 backdrop-blur">
+      <div className="sticky top-14 z-20 flex flex-wrap items-center justify-between gap-2 rounded-[1.5rem] border border-gold/50 bg-card/95 p-1.5 shadow-sm backdrop-blur">
         <div role="tablist" aria-label={t("Morning or evening")} className="flex gap-1">
           {(
             [
@@ -115,8 +115,8 @@ export function AthkarReader({ morning, evening }: { morning: Dhikr[]; evening: 
                 onClick={() => tap(d)}
                 aria-label={t("Count this dhikr, {count} of {total}", { count, total: d.count })}
                 className={cn(
-                  "block w-full rounded-[1.5rem] border bg-card px-5 py-5 text-start transition-colors",
-                  complete ? "border-grove/40 bg-[#eef2ea] opacity-80" : "border-border hover:border-brass",
+                  "andalus-card block w-full px-5 py-5 text-start transition-colors",
+                  complete ? "bg-accent opacity-80" : "hover:bg-accent/60",
                 )}
               >
                 {d.note ? <span className="text-xs tracking-wide text-brass uppercase">{t(d.note)}</span> : null}

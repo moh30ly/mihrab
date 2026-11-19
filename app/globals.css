@@ -9,15 +9,21 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
-  --font-heading: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-heading: var(--font-fraunces), var(--font-amiri), ui-serif, Georgia, serif;
+  --font-display: var(--font-fraunces), var(--font-amiri), ui-serif, Georgia, serif;
   --font-arabic: var(--font-amiri), "Noto Naskh Arabic", serif;
-  --color-grove: #14352b;
-  --color-grove-deep: #0d241d;
-  --color-brass: #8d6832;
-  --color-brass-bright: #e6d3a3;
-  --color-paper: #f3eee4;
-  --color-ink: #1a2c24;
-  --color-clay: #8c3d2f;
+  --color-grove: #6b2216;
+  --color-grove-deep: #3f120b;
+  --color-brass: #8a6424;
+  --color-brass-bright: #ecc97a;
+  --color-paper: #f5ead6;
+  --color-gold: #d2a24c;
+  --color-brick: #b4472c;
+  --color-stone: #f4e6c8;
+  --color-teal: #123f3c;
+  --color-teal-deep: #0b2b29;
+  --color-ink: #2b1a12;
+  --color-clay: #a8321c;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -57,24 +63,24 @@
 }
 
 :root {
-  --background: #f3eee4;
-  --foreground: #1a2c24;
-  --card: #fbf7f0;
-  --card-foreground: #1a2c24;
-  --popover: #fbf7f0;
-  --popover-foreground: #1a2c24;
-  --primary: #14352b;
-  --primary-foreground: #f6f1e6;
-  --secondary: #e7e0d2;
-  --secondary-foreground: #1a2c24;
-  --muted: #ebe4d6;
-  --muted-foreground: #4e5b53;
-  --accent: #f3ead7;
-  --accent-foreground: #1a2c24;
-  --destructive: #8c3d2f;
-  --border: #e2d8c6;
-  --input: #e2d8c6;
-  --ring: #8d6832;
+  --background: #f5ead6;
+  --foreground: #2b1a12;
+  --card: #fcf5e8;
+  --card-foreground: #2b1a12;
+  --popover: #fcf5e8;
+  --popover-foreground: #2b1a12;
+  --primary: #6b2216;
+  --primary-foreground: #fbf1de;
+  --secondary: #efe0c3;
+  --secondary-foreground: #2b1a12;
+  --muted: #f0e3c9;
+  --muted-foreground: #6a5444;
+  --accent: #f6e9cf;
+  --accent-foreground: #2b1a12;
+  --destructive: #a8321c;
+  --border: #e3cfa9;
+  --input: #dcc59b;
+  --ring: #8a6424;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -135,16 +141,73 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image: radial-gradient(1100px 420px at 50% -120px, rgba(141, 104, 50, 0.16), transparent 60%);
+    background-image:
+      radial-gradient(1100px 460px at 50% -140px, rgba(180, 71, 44, 0.14), transparent 62%),
+      url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2256%22%20height%3D%2256%22%20viewBox%3D%220%200%2056%2056%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%236b2216%22%20stroke-opacity%3D%220.07%22%20stroke-width%3D%221%22%3E%3Cpath%20d%3D%22M28%207.84L33.55%2014.59L42.26%2013.74L41.41%2022.45L48.16%2028L41.41%2033.55L42.26%2042.26L33.55%2041.41L28%2048.16L22.45%2041.41L13.74%2042.26L14.59%2033.55L7.84%2028L14.59%2022.45L13.74%2013.74L22.45%2014.59Z%22%2F%3E%3Cpath%20d%3D%22M28%2017.92L30.78%2021.29L35.13%2020.87L34.71%2025.22L38.08%2028L34.71%2030.78L35.13%2035.13L30.78%2034.71L28%2038.08L25.22%2034.71L20.87%2035.13L21.29%2030.78L17.92%2028L21.29%2025.22L20.87%2020.87L25.22%2021.29Z%22%2F%3E%3Cpath%20d%3D%22M0%20-11.09L2.97%20-7.17L7.84%20-7.84L7.17%20-2.97L11.09%200L7.17%202.97L7.84%207.84L2.97%207.17L0%2011.09L-2.97%207.17L-7.84%207.84L-7.17%202.97L-11.09%200L-7.17%20-2.97L-7.84%20-7.84L-2.97%20-7.17ZM0%2044.91L2.97%2048.83L7.84%2048.16L7.17%2053.03L11.09%2056L7.17%2058.97L7.84%2063.84L2.97%2063.17L0%2067.09L-2.97%2063.17L-7.84%2063.84L-7.17%2058.97L-11.09%2056L-7.17%2053.03L-7.84%2048.16L-2.97%2048.83ZM56%20-11.09L58.97%20-7.17L63.84%20-7.84L63.17%20-2.97L67.09%200L63.17%202.97L63.84%207.84L58.97%207.17L56%2011.09L53.03%207.17L48.16%207.84L48.83%202.97L44.91%200L48.83%20-2.97L48.16%20-7.84L53.03%20-7.17ZM56%2044.91L58.97%2048.83L63.84%2048.16L63.17%2053.03L67.09%2056L63.17%2058.97L63.84%2063.84L58.97%2063.17L56%2067.09L53.03%2063.17L48.16%2063.84L48.83%2058.97L44.91%2056L48.83%2053.03L48.16%2048.16L53.03%2048.83Z%22%2F%3E%3Cpath%20d%3D%22M28%200V7.84M28%2056V48.16M0%2028H7.84M56%2028H48.16%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+    background-attachment: fixed, scroll;
   }
 }
 
+/* Eight-pointed star work in gold over oxblood, framed like an alfiz. */
+.alfiz {
+  background-color: #6b2216;
+  background-image:
+    radial-gradient(120% 70% at 50% 0%, rgba(143, 50, 32, 0.9), transparent 70%),
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2256%22%20height%3D%2256%22%20viewBox%3D%220%200%2056%2056%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23d2a24c%22%20stroke-opacity%3D%220.16%22%20stroke-width%3D%221%22%3E%3Cpath%20d%3D%22M28%207.84L33.55%2014.59L42.26%2013.74L41.41%2022.45L48.16%2028L41.41%2033.55L42.26%2042.26L33.55%2041.41L28%2048.16L22.45%2041.41L13.74%2042.26L14.59%2033.55L7.84%2028L14.59%2022.45L13.74%2013.74L22.45%2014.59Z%22%2F%3E%3Cpath%20d%3D%22M28%2017.92L30.78%2021.29L35.13%2020.87L34.71%2025.22L38.08%2028L34.71%2030.78L35.13%2035.13L30.78%2034.71L28%2038.08L25.22%2034.71L20.87%2035.13L21.29%2030.78L17.92%2028L21.29%2025.22L20.87%2020.87L25.22%2021.29Z%22%2F%3E%3Cpath%20d%3D%22M0%20-11.09L2.97%20-7.17L7.84%20-7.84L7.17%20-2.97L11.09%200L7.17%202.97L7.84%207.84L2.97%207.17L0%2011.09L-2.97%207.17L-7.84%207.84L-7.17%202.97L-11.09%200L-7.17%20-2.97L-7.84%20-7.84L-2.97%20-7.17ZM0%2044.91L2.97%2048.83L7.84%2048.16L7.17%2053.03L11.09%2056L7.17%2058.97L7.84%2063.84L2.97%2063.17L0%2067.09L-2.97%2063.17L-7.84%2063.84L-7.17%2058.97L-11.09%2056L-7.17%2053.03L-7.84%2048.16L-2.97%2048.83ZM56%20-11.09L58.97%20-7.17L63.84%20-7.84L63.17%20-2.97L67.09%200L63.17%202.97L63.84%207.84L58.97%207.17L56%2011.09L53.03%207.17L48.16%207.84L48.83%202.97L44.91%200L48.83%20-2.97L48.16%20-7.84L53.03%20-7.17ZM56%2044.91L58.97%2048.83L63.84%2048.16L63.17%2053.03L67.09%2056L63.17%2058.97L63.84%2063.84L58.97%2063.17L56%2067.09L53.03%2063.17L48.16%2063.84L48.83%2058.97L44.91%2056L48.83%2053.03L48.16%2048.16L53.03%2048.83Z%22%2F%3E%3Cpath%20d%3D%22M28%200V7.84M28%2056V48.16M0%2028H7.84M56%2028H48.16%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  box-shadow:
+    inset 0 0 0 1px rgba(236, 201, 122, 0.55),
+    inset 0 0 0 5px #6b2216,
+    inset 0 0 0 6px rgba(236, 201, 122, 0.35),
+    0 10px 30px -12px rgba(63, 18, 11, 0.55);
+  border-radius: 1.25rem;
+  color: #fbf1de;
+}
+
 .arch-panel {
-  background:
-    radial-gradient(120% 80% at 50% -20%, rgba(230, 211, 163, 0.2), transparent 52%),
-    #14352b;
-  color: #f6f1e6;
-  border-radius: 5.5rem 5.5rem 1.5rem 1.5rem;
+  background-color: #123f3c;
+  background-image:
+    radial-gradient(120% 80% at 50% -20%, rgba(236, 201, 122, 0.18), transparent 55%),
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2256%22%20height%3D%2256%22%20viewBox%3D%220%200%2056%2056%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23d2a24c%22%20stroke-opacity%3D%220.16%22%20stroke-width%3D%221%22%3E%3Cpath%20d%3D%22M28%207.84L33.55%2014.59L42.26%2013.74L41.41%2022.45L48.16%2028L41.41%2033.55L42.26%2042.26L33.55%2041.41L28%2048.16L22.45%2041.41L13.74%2042.26L14.59%2033.55L7.84%2028L14.59%2022.45L13.74%2013.74L22.45%2014.59Z%22%2F%3E%3Cpath%20d%3D%22M28%2017.92L30.78%2021.29L35.13%2020.87L34.71%2025.22L38.08%2028L34.71%2030.78L35.13%2035.13L30.78%2034.71L28%2038.08L25.22%2034.71L20.87%2035.13L21.29%2030.78L17.92%2028L21.29%2025.22L20.87%2020.87L25.22%2021.29Z%22%2F%3E%3Cpath%20d%3D%22M0%20-11.09L2.97%20-7.17L7.84%20-7.84L7.17%20-2.97L11.09%200L7.17%202.97L7.84%207.84L2.97%207.17L0%2011.09L-2.97%207.17L-7.84%207.84L-7.17%202.97L-11.09%200L-7.17%20-2.97L-7.84%20-7.84L-2.97%20-7.17ZM0%2044.91L2.97%2048.83L7.84%2048.16L7.17%2053.03L11.09%2056L7.17%2058.97L7.84%2063.84L2.97%2063.17L0%2067.09L-2.97%2063.17L-7.84%2063.84L-7.17%2058.97L-11.09%2056L-7.17%2053.03L-7.84%2048.16L-2.97%2048.83ZM56%20-11.09L58.97%20-7.17L63.84%20-7.84L63.17%20-2.97L67.09%200L63.17%202.97L63.84%207.84L58.97%207.17L56%2011.09L53.03%207.17L48.16%207.84L48.83%202.97L44.91%200L48.83%20-2.97L48.16%20-7.84L53.03%20-7.17ZM56%2044.91L58.97%2048.83L63.84%2048.16L63.17%2053.03L67.09%2056L63.17%2058.97L63.84%2063.84L58.97%2063.17L56%2067.09L53.03%2063.17L48.16%2063.84L48.83%2058.97L44.91%2056L48.83%2053.03L48.16%2048.16L53.03%2048.83Z%22%2F%3E%3Cpath%20d%3D%22M28%200V7.84M28%2056V48.16M0%2028H7.84M56%2028H48.16%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  color: #fbf1de;
+  border-radius: 5.5rem 5.5rem 1.25rem 1.25rem;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(236, 201, 122, 0.7),
+    inset 0 0 0 6px #123f3c,
+    inset 0 0 0 7px rgba(236, 201, 122, 0.35);
+}
+
+/* A cream tile with a fine double gold rule, like a framed panel of stucco. */
+.andalus-card {
+  border-radius: 1.25rem;
+  background: #fcf5e8;
+  border: 1px solid #dcc59b;
+  box-shadow:
+    inset 0 0 0 3px #fcf5e8,
+    inset 0 0 0 4px rgba(210, 162, 76, 0.28),
+    0 1px 0 rgba(107, 34, 22, 0.05),
+    0 8px 24px -18px rgba(63, 18, 11, 0.45);
+}
+
+/* A running arcade of little horseshoe arches. */
+.frieze {
+  height: 22px;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2236%22%20height%3D%2222%22%20viewBox%3D%220%200%2036%2022%22%3E%3Crect%20width%3D%2236%22%20height%3D%2222%22%20fill%3D%22%236b2216%22%2F%3E%3CclipPath%20id%3D%22c%22%3E%3Crect%20width%3D%2236%22%20height%3D%2216.5%22%2F%3E%3C%2FclipPath%3E%3Cpath%20d%3D%22M13.4%2022V16.2A6%206%200%201%201%2022.6%2016.2V22Z%22%20fill%3D%22%23123f3c%22%2F%3E%3Cg%20clip-path%3D%22url(%23c)%22%3E%3Cpath%20d%3D%22M9.61%2016.46A9.5%209.5%200%200%201%208.55%2011.05L12.03%2011.4A6%206%200%200%200%2012.7%2014.82Z%22%20fill%3D%22%23b4472c%22%2F%3E%3Cpath%20d%3D%22M8.55%2011.05A9.5%209.5%200%200%201%2010.66%205.97L13.37%208.19A6%206%200%200%200%2012.03%2011.4Z%22%20fill%3D%22%23f4e6c8%22%2F%3E%3Cpath%20d%3D%22M10.66%205.97A9.5%209.5%200%200%201%2015.25%202.91L16.26%206.26A6%206%200%200%200%2013.37%208.19Z%22%20fill%3D%22%23b4472c%22%2F%3E%3Cpath%20d%3D%22M15.25%202.91A9.5%209.5%200%200%201%2020.75%202.91L19.74%206.26A6%206%200%200%200%2016.26%206.26Z%22%20fill%3D%22%23f4e6c8%22%2F%3E%3Cpath%20d%3D%22M20.75%202.91A9.5%209.5%200%200%201%2025.34%205.97L22.63%208.19A6%206%200%200%200%2019.74%206.26Z%22%20fill%3D%22%23b4472c%22%2F%3E%3Cpath%20d%3D%22M25.34%205.97A9.5%209.5%200%200%201%2027.45%2011.05L23.97%2011.4A6%206%200%200%200%2022.63%208.19Z%22%20fill%3D%22%23f4e6c8%22%2F%3E%3Cpath%20d%3D%22M27.45%2011.05A9.5%209.5%200%200%201%2026.39%2016.46L23.3%2014.82A6%206%200%200%200%2023.97%2011.4Z%22%20fill%3D%22%23b4472c%22%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%22M13.4%2016.2A6%206%200%201%201%2022.6%2016.2%22%20fill%3D%22none%22%20stroke%3D%22%23d2a24c%22%20stroke-width%3D%22.8%22%2F%3E%3Crect%20x%3D%229.7%22%20y%3D%2216%22%20width%3D%223.8%22%20height%3D%226%22%20fill%3D%22%23f4e6c8%22%2F%3E%3Crect%20x%3D%2222.5%22%20y%3D%2216%22%20width%3D%223.8%22%20height%3D%226%22%20fill%3D%22%23f4e6c8%22%2F%3E%3Crect%20x%3D%229.2%22%20y%3D%2215.6%22%20width%3D%224.8%22%20height%3D%221.2%22%20fill%3D%22%23d2a24c%22%2F%3E%3Crect%20x%3D%2222%22%20y%3D%2215.6%22%20width%3D%224.8%22%20height%3D%221.2%22%20fill%3D%22%23d2a24c%22%2F%3E%3Cpath%20d%3D%22M0%20.5H36M0%2021.5H36%22%20stroke%3D%22%23d2a24c%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: repeat-x;
+  background-position: center;
+  border-radius: 3px;
+}
+
+.frieze-thin {
+  height: 22px;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2236%22%20height%3D%2222%22%20viewBox%3D%220%200%2036%2022%22%3E%3Crect%20width%3D%2236%22%20height%3D%2222%22%20fill%3D%22%236b2216%22%2F%3E%3CclipPath%20id%3D%22c%22%3E%3Crect%20width%3D%2236%22%20height%3D%2216.5%22%2F%3E%3C%2FclipPath%3E%3Cpath%20d%3D%22M13.4%2022V16.2A6%206%200%201%201%2022.6%2016.2V22Z%22%20fill%3D%22%23123f3c%22%2F%3E%3Cg%20clip-path%3D%22url(%23c)%22%3E%3Cpath%20d%3D%22M9.61%2016.46A9.5%209.5%200%200%201%208.55%2011.05L12.03%2011.4A6%206%200%200%200%2012.7%2014.82Z%22%20fill%3D%22%23b4472c%22%2F%3E%3Cpath%20d%3D%22M8.55%2011.05A9.5%209.5%200%200%201%2010.66%205.97L13.37%208.19A6%206%200%200%200%2012.03%2011.4Z%22%20fill%3D%22%23f4e6c8%22%2F%3E%3Cpath%20d%3D%22M10.66%205.97A9.5%209.5%200%200%201%2015.25%202.91L16.26%206.26A6%206%200%200%200%2013.37%208.19Z%22%20fill%3D%22%23b4472c%22%2F%3E%3Cpath%20d%3D%22M15.25%202.91A9.5%209.5%200%200%201%2020.75%202.91L19.74%206.26A6%206%200%200%200%2016.26%206.26Z%22%20fill%3D%22%23f4e6c8%22%2F%3E%3Cpath%20d%3D%22M20.75%202.91A9.5%209.5%200%200%201%2025.34%205.97L22.63%208.19A6%206%200%200%200%2019.74%206.26Z%22%20fill%3D%22%23b4472c%22%2F%3E%3Cpath%20d%3D%22M25.34%205.97A9.5%209.5%200%200%201%2027.45%2011.05L23.97%2011.4A6%206%200%200%200%2022.63%208.19Z%22%20fill%3D%22%23f4e6c8%22%2F%3E%3Cpath%20d%3D%22M27.45%2011.05A9.5%209.5%200%200%201%2026.39%2016.46L23.3%2014.82A6%206%200%200%200%2023.97%2011.4Z%22%20fill%3D%22%23b4472c%22%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%22M13.4%2016.2A6%206%200%201%201%2022.6%2016.2%22%20fill%3D%22none%22%20stroke%3D%22%23d2a24c%22%20stroke-width%3D%22.8%22%2F%3E%3Crect%20x%3D%229.7%22%20y%3D%2216%22%20width%3D%223.8%22%20height%3D%226%22%20fill%3D%22%23f4e6c8%22%2F%3E%3Crect%20x%3D%2222.5%22%20y%3D%2216%22%20width%3D%223.8%22%20height%3D%226%22%20fill%3D%22%23f4e6c8%22%2F%3E%3Crect%20x%3D%229.2%22%20y%3D%2215.6%22%20width%3D%224.8%22%20height%3D%221.2%22%20fill%3D%22%23d2a24c%22%2F%3E%3Crect%20x%3D%2222%22%20y%3D%2215.6%22%20width%3D%224.8%22%20height%3D%221.2%22%20fill%3D%22%23d2a24c%22%2F%3E%3Cpath%20d%3D%22M0%20.5H36M0%2021.5H36%22%20stroke%3D%22%23d2a24c%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: repeat-x;
+  background-position: center;
+  transform: scaleY(0.6);
+  transform-origin: bottom;
+}
+
+.pb-nav {
+  padding-bottom: calc(5.25rem + env(safe-area-inset-bottom));
 }
 
 .font-arabic {

@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import { LocateFixed, Search } from "lucide-react"
 import { CalculationSheet } from "@/components/calculation-sheet"
 import { CityPicker } from "@/components/city-picker"
-import { QiblaCompass } from "@/components/qibla-compass"
+import { QiblaTeaser } from "@/components/qibla-compass"
+import { ArchFrame, Frieze } from "@/components/ornament"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -55,6 +56,7 @@ import {
 import { OBLIGATORY_KEYS, PRAYER_KEYS, type DayTimes, type Place, type Settings } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { tNow, useT } from "@/lib/i18n"
+import { locationErrorMessage, readDevicePosition } from "@/lib/locate"
 
 type Schedule =
   | { error: true }
@@ -288,28 +290,24 @@ export function MihrabApp() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pt-5 pb-10 sm:px-6">
-      <header className="flex items-end justify-between gap-4">
-        <div>
-          <p lang="ar" dir="rtl" className="font-arabic text-base text-brass">
-            بسم الله الرحمن الرحيم
-          </p>
-          <h1 className="font-display text-4xl tracking-tight text-grove sm:text-5xl">Mihrab</h1>
-          <p className="mt-1 max-w-md text-sm leading-6 text-muted-foreground sm:text-base">
-            {t("Qibla and the five daily prayers, in the time zone of where you are.")}
-          </p>
-        </div>
-        <p lang="ar" dir="rtl" className="font-arabic text-3xl text-grove sm:text-4xl">
-          محراب
+      <header className="text-center">
+        <p lang="ar" dir="rtl" className="font-arabic text-2xl text-brass sm:text-3xl">
+          بسم الله الرحمن الرحيم
+        </p>
+        <h1 className="sr-only">Mihrab</h1>
+        <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-muted-foreground sm:text-base">
+          {t("Qibla and the five daily prayers, in the time zone of where you are.")}
         </p>
       </header>
+      <Frieze className="mx-auto mt-4 max-w-md" />
 
-      <div className="mt-6">
+      <div className="mt-5">
         {!clientReady || now == null ? (
-          <div className="arch-panel h-64 animate-pulse" />
+          <div className="alfiz h-96 animate-pulse" />
         ) : !place ? (
           <Welcome locating={locating} message={geoMessage} onLocate={() => void locate()} onSearch={() => setCityOpen(true)} />
         ) : !times ? (
-          <section className="rounded-[1.75rem] border border-border bg-card p-6">
+          <section className="andalus-card p-6">
             <h2 className="font-display text-3xl text-grove">{t("These coordinates need another rule")}</h2>
             <p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">
               {t("Mihrab could not build a full day of prayer times here. Open Calculation and choose another high-latitude rule, or pick a nearby city.")}
@@ -325,27 +323,28 @@ export function MihrabApp() {
           </section>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
-            <section className="arch-panel px-5 py-7 sm:px-8">
-              <div className="flex items-center justify-between gap-3 text-sm text-brass-bright">
+            <ArchFrame lift={30} nicheClassName="px-3 pb-7 text-center sm:px-6">
+              <div className="flex items-center justify-center gap-2 text-sm text-brass-bright">
                 <p>{next?.tomorrow ? t("Tomorrow") : t("Next prayer")}</p>
+                <span aria-hidden>·</span>
                 <p className="tabular-nums">{formatClock(new Date(now), place.timezone, true)}</p>
               </div>
-              <h2 className="mt-3 font-display text-6xl leading-none text-[#f6f1e6] sm:text-7xl">
+              <h2 className="mt-2 font-display text-5xl leading-none text-[#fbf1de] sm:text-6xl">
                 {next ? t(PRAYER_INFO[next.key].name) : "—"}
               </h2>
               {next && locale !== "ar" && (
-                <p lang="ar" dir="rtl" className="font-arabic mt-2 text-3xl text-brass-bright">
+                <p lang="ar" dir="rtl" className="font-arabic mt-1 text-3xl text-brass-bright">
                   {PRAYER_INFO[next.key].arabic}
                 </p>
               )}
-              <p className="mt-5 font-display text-4xl text-[#f6f1e6] tabular-nums">
+              <p className="mt-4 font-display text-4xl text-[#fbf1de] tabular-nums">
                 {next ? formatPrayerTime(next.at, place.timezone) : "—"}
               </p>
-              <p className="mt-1 text-lg text-[#f6f1e6]/85">
+              <p className="mt-1 text-base text-[#fbf1de]/85">
                 {next ? formatRemaining(next.at.getTime() - now) : ""}
               </p>
               <div
-                className="mt-6 h-1.5 overflow-hidden rounded-full bg-white/15"
+                className="mx-auto mt-5 h-1.5 max-w-xs overflow-hidden rounded-full bg-white/15"
                 role="progressbar"
                 aria-valuemin={0}
                 aria-valuemax={100}
@@ -355,16 +354,16 @@ export function MihrabApp() {
                 <div className="h-full rounded-full bg-brass-bright" style={{ width: `${progress * 100}%` }} />
               </div>
               {current === "fajr" && (
-                <p className="mt-4 text-sm text-[#f6f1e6]/80">
+                <p className="mt-4 text-sm text-[#fbf1de]/80">
                   {t("Fajr remains until sunrise at {time}.", { time: formatPrayerTime(times.today.sunrise, place.timezone) })}
                 </p>
               )}
-            </section>
+            </ArchFrame>
 
-            <QiblaCompass bearing={bearing} distanceLabel={distance} />
+            <QiblaTeaser bearing={bearing} distanceLabel={distance} />
 
             {visibleNotice && (
-              <div className="rounded-2xl border border-brass/50 bg-[#f8f1e2] px-4 py-3 lg:col-span-2" role="status">
+              <div className="andalus-card px-4 py-3 lg:col-span-2" role="status">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-display text-2xl text-grove">{visibleNotice.title}</p>
@@ -377,7 +376,7 @@ export function MihrabApp() {
               </div>
             )}
 
-            <section className="rounded-[1.75rem] border border-border bg-card lg:col-span-2">
+            <section className="andalus-card lg:col-span-2">
               <div className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-5">
                 <div>
                   <h2 className="font-display text-3xl text-grove">{t("Today in {place}", { place: place.label })}</h2>
@@ -425,7 +424,7 @@ export function MihrabApp() {
                       aria-current={isCurrent ? "true" : undefined}
                       className={cn(
                         "flex items-center justify-between gap-4 border-b border-border px-4 py-3 last:border-b-0 sm:px-5",
-                        isCurrent && "bg-[#f8f1e2]",
+                        isCurrent && "bg-accent shadow-[inset_3px_0_0_var(--color-gold)] rtl:shadow-[inset_-3px_0_0_var(--color-gold)]",
                       )}
                     >
                       <div>
@@ -477,7 +476,7 @@ export function MihrabApp() {
               </div>
             </section>
 
-            <section className="rounded-[1.75rem] border border-border bg-card px-4 py-5 sm:px-5">
+            <section id="reminders" className="andalus-card scroll-mt-20 px-4 py-5 sm:px-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="font-display text-3xl text-grove">{t("Reminders")}</h2>
@@ -558,7 +557,7 @@ export function MihrabApp() {
               <ExtraRemindersPanel place={place} settings={settings} onChange={updateSettings} />
             </section>
 
-            <section className="rounded-[1.75rem] border border-border bg-card px-4 py-5 sm:px-5">
+            <section className="andalus-card px-4 py-5 sm:px-5">
               <h2 className="font-display text-3xl text-grove">{t("Calculation")}</h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {t(methodById(settings.method).name)}. {t("{madhab} Asr", { madhab: t(madhabById(settings.madhab).name) })}.
@@ -617,15 +616,15 @@ function Welcome({
 }) {
   const { t } = useT()
   return (
-    <section className="arch-panel px-6 py-10 text-center sm:px-12 sm:py-14">
+    <ArchFrame lift={28} nicheClassName="px-3 pb-8 text-center sm:px-8">
       <p className="text-xs tracking-[0.2em] text-brass-bright uppercase">{t("Assalamu alaikum")}</p>
-      <h2 className="mx-auto mt-3 max-w-xl font-display text-4xl leading-tight text-[#f6f1e6] sm:text-6xl">
+      <h2 className="mx-auto mt-3 max-w-xl font-display text-3xl leading-tight text-[#f6f1e6] sm:text-5xl">
         {t("The Qibla, and the salah of this place.")}
       </h2>
       <p className="mx-auto mt-4 max-w-md text-base leading-7 text-[#f6f1e6]/85">
         {t("Tell Mihrab where you are. It points toward the Kaaba and lays out Fajr, Dhuhr, Asr, Maghrib, and Isha in that time zone.")}
       </p>
-      <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+      <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
         <Button
           type="button"
           className="h-12 bg-brass-bright text-grove hover:bg-brass-bright/90"
@@ -653,7 +652,7 @@ function Welcome({
       <p className="mx-auto mt-8 max-w-md text-sm leading-6 text-[#f6f1e6]/70">
         {t("Your coordinates stay in this browser. Nothing about where you are is sent to a server.")}
       </p>
-    </section>
+    </ArchFrame>
   )
 }
 
@@ -693,31 +692,4 @@ function extraNotice(extras: ExtraEvent[], place: Place, settings: Settings, now
     return { key: `${civilKey(place.timezone, extra.at)}:${extra.key}:0`, title: extra.title, body: extra.body }
   }
   return null
-}
-
-function readDevicePosition() {
-  return new Promise<GeolocationPosition>((resolve, reject) => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      reject(new Error("unsupported"))
-      return
-    }
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true,
-      timeout: 12_000,
-      maximumAge: 60_000,
-    })
-  })
-}
-
-function locationErrorMessage(error: unknown) {
-  if (error instanceof GeolocationPositionError) {
-    if (error.code === error.PERMISSION_DENIED) {
-      return tNow("Location access is off in this browser. Search for your city, or enter coordinates.")
-    }
-    if (error.code === error.TIMEOUT) {
-      return tNow("Finding your position took too long. Try again, or search for your city.")
-    }
-    return tNow("Your position could not be read. Search for your city instead.")
-  }
-  return tNow("This browser has no location service. Search for your city, or enter coordinates.")
 }

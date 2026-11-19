@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
+import { StarBadge } from "@/components/ornament"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { LAST_READ_KEY, type SurahInfo } from "@/lib/quran-index"
@@ -93,11 +94,9 @@ export function SurahList({ surahs }: { surahs: SurahInfo[] }) {
           <li key={s.id} className="min-w-0">
             <Link
               href={`/quran/${s.id}/`}
-              className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 transition-colors hover:border-brass"
+              className="andalus-card flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-accent"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-medium text-grove tabular-nums">
-                {s.id}
-              </span>
+              <StarBadge>{s.id}</StarBadge>
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-medium text-ink">{s.transliteration}</span>
                 <span className="block truncate text-xs text-muted-foreground">
