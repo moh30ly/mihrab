@@ -49,6 +49,9 @@ export const DEFAULT_SETTINGS: Settings = {
     zakat: false,
     zakatMonth: 9,
     zakatDay: 1,
+    duaOfDay: false,
+    quranHourly: false,
+    goodDeed: false,
   },
 }
 
@@ -69,6 +72,9 @@ function loadExtras(value: unknown): Settings["extras"] {
     zakat: Boolean(v.zakat),
     zakatMonth: intIn(v.zakatMonth, 1, 12, base.zakatMonth),
     zakatDay: intIn(v.zakatDay, 1, 30, base.zakatDay),
+    duaOfDay: Boolean(v.duaOfDay),
+    quranHourly: Boolean(v.quranHourly),
+    goodDeed: Boolean(v.goodDeed),
   }
 }
 

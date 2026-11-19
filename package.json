@@ -7,13 +7,14 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1 --port 3847",
     "lint": "eslint",
-    "test": "tsx --test lib/prayer.test.ts lib/reminders.test.ts lib/native-reminders.test.ts lib/extra-reminders.test.ts lib/zakat.test.ts",
+    "test": "tsx --test lib/prayer.test.ts lib/reminders.test.ts lib/native-reminders.test.ts lib/extra-reminders.test.ts lib/zakat.test.ts lib/duas.test.ts lib/sibha.test.ts lib/good-deeds.test.ts",
     "android": "next build && cap sync android && cap open android",
     "android:sync": "next build && cap sync android",
     "quran:import": "node scripts/import-quran.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
+    "@capacitor-community/text-to-speech": "^8.0.2",
     "@capacitor/android": "^8.6.2",
     "@capacitor/core": "^8.6.2",
     "@capacitor/local-notifications": "^8.3.1",

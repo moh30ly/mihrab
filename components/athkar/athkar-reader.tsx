@@ -1,12 +1,16 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { RotateCcw, Sun, Sunset } from "lucide-react"
+import { HandHeart, RotateCcw, ShieldCheck, Sun, Sunset } from "lucide-react"
+import { DuasList, RuqyaList } from "@/components/athkar/duas-list"
+import { SpeakButton } from "@/components/speak-button"
 import type { Dhikr } from "@/lib/athkar"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 
 type Period = "morning" | "evening"
+type Tab = Period | "duas" | "ruqya"
+const isReading = (tab: Tab) => tab === "duas" || tab === "ruqya"
 
 function todayKey(period: Period) {
   const d = new Date()
@@ -31,24 +35,29 @@ function saveProgress(period: Period, value: Record<number, number>) {
 
 export function AthkarReader({ morning, evening }: { morning: Dhikr[]; evening: Dhikr[] }) {
   const { t } = useT()
-  const [period, setPeriod] = useState<Period>("morning")
+  const [tab, setTab] = useState<Tab>("morning")
+  const period: Period = tab === "evening" ? "evening" : "morning"
   const [done, setDone] = useState<Record<number, number>>({})
   const [showEnglish, setShowEnglish] = useState(true)
 
   useEffect(() => {
-    // Open on the evening athkar from mid-afternoon onward; read today's counts after hydration.
+    // Open on the evening athkar from mid-afternoon onward (or on the duas when the link asks
+    // for them); read today's counts after hydration.
     const initial: Period = new Date().getHours() >= 15 ? "evening" : "morning"
+    const hash = window.location.hash
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPeriod(initial)
+    setTab(hash.startsWith("#ruqya") ? "ruqya" : hash.startsWith("#dua") ? "duas" : initial)
     setDone(loadProgress(initial))
   }, [])
 
   const list = period === "morning" ? morning : evening
   const finished = useMemo(() => list.filter((d) => (done[d.id] ?? 0) >= d.count).length, [list, done])
 
-  const choose = (p: Period) => {
-    setPeriod(p)
-    setDone(loadProgress(p))
+  const choose = (next: Tab) => {
+    setTab(next)
+    if (!isReading(next)) setDone(loadProgress(next as Period))
+    const hash = isReading(next) ? `#${next}` : ""
+    if (window.location.hash !== hash) window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${hash}`)
   }
 
   const tap = (d: Dhikr) => {
@@ -65,46 +74,54 @@ export function AthkarReader({ morning, evening }: { morning: Dhikr[]; evening: 
   return (
     <div className="mt-6">
       <div className="sticky top-14 z-20 flex flex-wrap items-center justify-between gap-2 rounded-[1.5rem] border border-gold/50 bg-card/95 p-1.5 shadow-sm backdrop-blur">
-        <div role="tablist" aria-label={t("Morning or evening")} className="flex gap-1">
+        <div role="tablist" aria-label={t("Athkar and duas")} className="flex w-full gap-1 sm:w-auto">
           {(
             [
               ["morning", "Morning", "الصباح", Sun],
               ["evening", "Evening", "المساء", Sunset],
+              ["duas", "Duas", "الأدعية", HandHeart],
+              ["ruqya", "Ruqya", "الرقية", ShieldCheck],
             ] as const
           ).map(([value, label, arabic, Icon]) => (
             <button
               key={value}
               role="tab"
               type="button"
-              aria-selected={period === value}
+              aria-selected={tab === value}
               onClick={() => choose(value)}
               className={cn(
-                "inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-medium",
-                period === value ? "bg-grove text-[#f6f1e6]" : "text-ink hover:bg-secondary",
+                "inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-2 text-sm font-medium sm:flex-none sm:gap-2 sm:px-4",
+                tab === value ? "bg-grove text-[#f6f1e6]" : "text-ink hover:bg-secondary",
               )}
             >
-              <Icon className="size-4" aria-hidden />
+              <Icon className="size-4 shrink-0 max-[420px]:hidden" aria-hidden />
               {t(label)}
-              <span lang="ar" className="font-arabic">
+              <span lang="ar" className="font-arabic max-sm:hidden">
                 {arabic}
               </span>
             </button>
           ))}
         </div>
         <div className="flex items-center gap-3 pe-2 text-sm text-muted-foreground">
-          <span className="tabular-nums">
-            {finished}/{list.length}
-          </span>
+          {!isReading(tab) ? (
+            <span className="tabular-nums">
+              {finished}/{list.length}
+            </span>
+          ) : null}
           <button type="button" className="underline-offset-2 hover:underline" onClick={() => setShowEnglish((v) => !v)}>
             {showEnglish ? t("Hide English") : t("Show English")}
           </button>
-          <button type="button" aria-label={t("Start again")} className="rounded-full p-2 hover:bg-secondary" onClick={reset}>
-            <RotateCcw className="size-4" aria-hidden />
-          </button>
+          {!isReading(tab) ? (
+            <button type="button" aria-label={t("Start again")} className="rounded-full p-2 hover:bg-secondary" onClick={reset}>
+              <RotateCcw className="size-4" aria-hidden />
+            </button>
+          ) : null}
         </div>
       </div>
 
-      <ol className="mt-4 grid gap-3">
+      {tab === "duas" ? <DuasList showEnglish={showEnglish} /> : null}
+      {tab === "ruqya" ? <RuqyaList showEnglish={showEnglish} /> : null}
+      <ol className={cn("mt-4 grid gap-3", isReading(tab) && "hidden")}>
         {list.map((d) => {
           const count = done[d.id] ?? 0
           const complete = count >= d.count
@@ -123,7 +140,11 @@ export function AthkarReader({ morning, evening }: { morning: Dhikr[]; evening: 
                 <p lang="ar" dir="rtl" className="font-arabic mt-1 text-2xl leading-[2.1] text-ink">
                   {d.arabic}
                 </p>
-                {showEnglish ? <p className="mt-3 text-base leading-7 text-muted-foreground">{d.english}</p> : null}
+                {showEnglish ? (
+                  <p lang="en" dir="ltr" className="mt-3 text-start text-base leading-7 text-muted-foreground">
+                    {d.english}
+                  </p>
+                ) : null}
                 <span className="mt-4 flex items-center justify-between gap-3">
                   <span
                     className={cn(
@@ -138,10 +159,13 @@ export function AthkarReader({ morning, evening }: { morning: Dhikr[]; evening: 
                   </span>
                 </span>
               </button>
-              <details className="px-5 pt-1 text-xs leading-5 text-muted-foreground">
-                <summary className="cursor-pointer py-1">{t("Source")}</summary>
-                {d.reference}
-              </details>
+              <div className="flex flex-wrap items-start gap-x-4 gap-y-1 px-5 pt-2">
+                <SpeakButton text={d.arabic} />
+                <details className="min-w-0 flex-1 text-xs leading-5 text-muted-foreground">
+                  <summary className="cursor-pointer py-2">{t("Source")}</summary>
+                  {d.reference}
+                </details>
+              </div>
             </li>
           )
         })}
