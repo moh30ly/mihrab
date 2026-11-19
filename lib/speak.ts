@@ -121,12 +121,72 @@ async function speakWeb(text: string) {
 
 // ---- Android: the TTS engine through the plugin ----
 
+type NativeTts = Awaited<ReturnType<typeof plugin>>
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+const message = (e: unknown) => (e instanceof Error ? e.message : String(e))
+
+/** The engine binds a moment after the app starts, and calls before that are refused as "not yet initialized". */
+async function whenReady<T>(call: () => Promise<T>): Promise<T> {
+  for (let i = 0; ; i++) {
+    try {
+      return await call()
+    } catch (e) {
+      if (i >= 15 || !/initiali[sz]ed|not available/i.test(message(e))) throw e
+      await sleep(250)
+    }
+  }
+}
+
+/** Ask the engine the same question its speak() asks, so we only refuse when it would too. */
+async function nativeArabic(tts: NativeTts): Promise<string | null> {
+  for (const lang of ["ar-SA", "ar", "ar-EG", "ar-AE"]) {
+    try {
+      if ((await tts.isLanguageSupported({ lang })).supported) return lang
+    } catch {
+      // Try the next one.
+    }
+  }
+  try {
+    const { languages } = await tts.getSupportedLanguages()
+    const found = languages.find((l) => l.toLowerCase().replace("_", "-").startsWith("ar"))
+    if (found) return found.replace("_", "-")
+  } catch {
+    // Some engines can't list their languages.
+  }
+  return null
+}
+
+let nativeRun = 0
+
+/** How long a chunk may take before we assume the engine went quiet (Android sends no "started" event). */
+export const chunkTimeoutMs = (chunk: string) => 8000 + chunk.length * 250
+
 async function speakNative(text: string) {
   const tts = await plugin()
-  const { languages } = await tts.getSupportedLanguages()
-  const lang = languages.find((l) => /^ar[-_]sa$/i.test(l)) ?? languages.find((l) => l.toLowerCase().startsWith("ar"))
+  // Speaking needs an initialised engine; stop() is refused the same way until it is.
+  await whenReady(() => tts.stop())
+  const lang = await nativeArabic(tts)
   if (!lang) throw new NoArabicVoiceError()
-  await tts.speak({ text, lang: lang.replace("_", "-"), rate: RATE, pitch: 1, volume: 1, category: "playback" })
+  const run = ++nativeRun
+  for (const chunk of speechChunks(text)) {
+    if (run !== nativeRun) return
+    let timer: ReturnType<typeof setTimeout> | undefined
+    try {
+      await Promise.race([
+        tts.speak({ text: chunk, lang, rate: RATE, pitch: 1, volume: 1, category: "playback" }),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new Error("The voice did not finish speaking")), chunkTimeoutMs(chunk))
+        }),
+      ])
+    } catch (e) {
+      if (run !== nativeRun) return // Stop was pressed.
+      void tts.stop().catch(() => {})
+      throw e
+    } finally {
+      clearTimeout(timer)
+    }
+  }
 }
 
 /** Opens the Android screen to install voice data (a no-op elsewhere). */
@@ -148,6 +208,7 @@ export async function speakArabic(text: string): Promise<void> {
 export async function stopSpeaking() {
   try {
     if (isNative()) {
+      nativeRun++
       await (await plugin()).stop()
     } else if ("speechSynthesis" in window) {
       webRun++
