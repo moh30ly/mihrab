@@ -39,6 +39,7 @@ import {
 import { isInsideReminderWindow, reminderStorageKey } from "@/lib/reminders"
 import { duhaWindow, extraEventsForDay, zakatEvent, type ExtraEvent } from "@/lib/extra-reminders"
 import { ExtraRemindersPanel } from "@/components/extra-reminders-panel"
+import { GoodDeedCard } from "@/components/good-deed-card"
 import {
   commitPlace,
   commitSettings,
@@ -361,6 +362,8 @@ export function MihrabApp() {
             </ArchFrame>
 
             <QiblaTeaser bearing={bearing} distanceLabel={distance} />
+
+            <GoodDeedCard className="lg:col-span-2" />
 
             {visibleNotice && (
               <div className="andalus-card px-4 py-3 lg:col-span-2" role="status">

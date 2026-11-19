@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { HandHeart, RotateCcw, ShieldCheck, Sun, Sunset } from "lucide-react"
 import { DuasList, RuqyaList } from "@/components/athkar/duas-list"
+import { SpeakButton } from "@/components/speak-button"
 import type { Dhikr } from "@/lib/athkar"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
@@ -158,10 +159,13 @@ export function AthkarReader({ morning, evening }: { morning: Dhikr[]; evening: 
                   </span>
                 </span>
               </button>
-              <details className="px-5 pt-1 text-xs leading-5 text-muted-foreground">
-                <summary className="cursor-pointer py-1">{t("Source")}</summary>
-                {d.reference}
-              </details>
+              <div className="flex flex-wrap items-start gap-x-4 gap-y-1 px-5 pt-2">
+                <SpeakButton text={d.arabic} />
+                <details className="min-w-0 flex-1 text-xs leading-5 text-muted-foreground">
+                  <summary className="cursor-pointer py-2">{t("Source")}</summary>
+                  {d.reference}
+                </details>
+              </div>
             </li>
           )
         })}

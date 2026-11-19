@@ -59,6 +59,8 @@ export type ExtraReminders = {
   duaOfDay: boolean
   /** A nudge to read some Quran every hour, on the hour, between Fajr and Isha. */
   quranHourly: boolean
+  /** A nudge toward a good deed, an hour before Maghrib. */
+  goodDeed: boolean
 }
 
 export type Settings = {

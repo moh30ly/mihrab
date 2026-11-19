@@ -31,7 +31,7 @@ export async function nativePermission(request: boolean): Promise<NotificationPe
 }
 
 // Ids are 1000 + day * 100 + slot. The hourly Quran reminders use slots 70–93 (70 + hour).
-const EXTRA_SLOT: Record<ExtraKey, number> = { duha: 60, athkarMorning: 61, athkarEvening: 62, sadaqah: 63, duaOfDay: 64, quran: 70, zakat: 0 }
+const EXTRA_SLOT: Record<ExtraKey, number> = { duha: 60, athkarMorning: 61, athkarEvening: 62, sadaqah: 63, duaOfDay: 64, goodDeed: 65, quran: 70, zakat: 0 }
 const ZAKAT_ID = 5000
 
 export type NativeReminder = { id: number; at: Date; title: string; body: string }

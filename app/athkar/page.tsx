@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import Link from "next/link"
+import { TasbihIcon } from "@/components/nav-icons"
 import { Frieze } from "@/components/ornament"
 import { AthkarReader } from "@/components/athkar/athkar-reader"
 import { athkarFor } from "@/lib/athkar"
@@ -21,6 +23,13 @@ export default function AthkarPage() {
         <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-muted-foreground">
           <T k="The morning and evening remembrances, everyday duas and ruqya. Tap an athkar card each time you say it." />
         </p>
+        <Link
+          href="/sibha/"
+          className="mt-3 inline-flex h-10 items-center gap-2 rounded-full border border-gold/60 bg-card px-4 text-sm font-medium text-grove hover:bg-secondary"
+        >
+          <TasbihIcon className="size-5" />
+          <T k="Open the sibha (tasbih counter)" />
+        </Link>
       </header>
       <Frieze className="mx-auto mt-4 max-w-sm" />
       <AthkarReader morning={athkarFor("morning")} evening={athkarFor("evening")} />

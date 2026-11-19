@@ -20,7 +20,7 @@ const london: Place = {
 const all: Settings = {
   ...DEFAULT_SETTINGS,
   remindersEnabled: true,
-  extras: { ...DEFAULT_SETTINGS.extras, duha: true, athkarMorning: true, athkarEvening: true, sadaqah: true, sadaqahDay: 5, zakat: true, duaOfDay: true, quranHourly: true },
+  extras: { ...DEFAULT_SETTINGS.extras, duha: true, athkarMorning: true, athkarEvening: true, sadaqah: true, sadaqahDay: 5, zakat: true, duaOfDay: true, quranHourly: true, goodDeed: true },
 }
 
 describe("extra reminders", () => {
@@ -33,7 +33,7 @@ describe("extra reminders", () => {
   it("puts Duha after sunrise and the athkar after Fajr and Asr", () => {
     const now = new Date("2026-03-04T00:30:00Z") // a Wednesday in London
     const events = extraEventsForDay(london, all, 0, now)
-    const keys = events.map((e) => e.key).filter((k) => k !== "quran" && k !== "duaOfDay")
+    const keys = events.map((e) => e.key).filter((k) => k !== "quran" && k !== "duaOfDay" && k !== "goodDeed")
     assert.deepEqual(keys, ["duha", "athkarMorning", "athkarEvening"])
     const duha = events[0].at.getTime()
     const morning = events[1].at.getTime()

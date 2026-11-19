@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Sparkles } from "lucide-react"
 import { DUA_GROUPS, RUQYA, duaOfTheDayFor, duasIn, type Dua } from "@/lib/duas"
+import { SpeakButton } from "@/components/speak-button"
 import { useT } from "@/lib/i18n"
 
 export function DuasList({ showEnglish }: { showEnglish: boolean }) {
@@ -121,10 +122,13 @@ function DuaBody({ dua, showEnglish }: { dua: Dua; showEnglish: boolean }) {
           {dua.count > 1 ? <span className="text-grove">{t("{n} times", { n: dua.count })}</span> : null}
         </p>
       ) : null}
-      <details className="mt-2 text-xs leading-5 text-muted-foreground">
-        <summary className="cursor-pointer py-1">{t("Source")}</summary>
-        {dua.reference}
-      </details>
+      <div className="mt-3 flex flex-wrap items-start gap-x-4 gap-y-1">
+        <SpeakButton text={dua.arabic} />
+        <details className="min-w-0 flex-1 text-xs leading-5 text-muted-foreground">
+          <summary className="cursor-pointer py-2">{t("Source")}</summary>
+          {dua.reference}
+        </details>
+      </div>
     </>
   )
 }

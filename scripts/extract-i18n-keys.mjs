@@ -43,6 +43,8 @@ arrays("components/mihrab-app.tsx", "LEADS")
 for (const k of ["Morning", "Evening", "Duas", "Ruqya"]) keys.add(k)
 for (const d of JSON.parse(readFileSync(join(root, "data/athkar.json"), "utf8"))) if (d.note) keys.add(d.note)
 fields("lib/duas.ts", ["title"])
+fields("lib/sibha.ts", ["name"])
+fields("lib/good-deeds.ts", ["question", "reason"])
 for (const d of JSON.parse(readFileSync(join(root, "data/duas.json"), "utf8"))) {
   keys.add(d.title)
   if (d.note) keys.add(d.note)

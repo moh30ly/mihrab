@@ -2,12 +2,13 @@
 // of the day, an hourly nudge to read Quran, a weekly sadaqah nudge, and a yearly
 // zakat date on the Hijri calendar.
 import { duaOfTheDay } from "@/lib/duas"
+import { goodDeedOfTheDay } from "@/lib/good-deeds"
 import { formatPrayerTime } from "@/lib/format"
 import { tNow } from "@/lib/i18n/translate"
 import { civilParts, dayTimes, timesAreOrdered, validDate } from "@/lib/prayer"
 import type { DayTimes, Place, Settings } from "@/lib/types"
 
-export type ExtraKey = "duha" | "athkarMorning" | "athkarEvening" | "duaOfDay" | "quran" | "sadaqah" | "zakat"
+export type ExtraKey = "duha" | "athkarMorning" | "athkarEvening" | "duaOfDay" | "quran" | "goodDeed" | "sadaqah" | "zakat"
 
 /** `hour` tells the hourly Quran reminders apart (local hour 0–23). */
 export type ExtraEvent = { key: ExtraKey; at: Date; title: string; body: string; hour?: number }
@@ -21,6 +22,8 @@ export const ATHKAR_AFTER_PRAYER_MIN = 20
 export const DUA_AFTER_DHUHR_MIN = 20
 /** Arabic this short goes in the notification itself; longer duas show their occasion. */
 const DUA_IN_NOTIFICATION_MAX = 90
+/** The good-deed nudge comes an hour before Maghrib, while there is still daylight to act on it. */
+export const GOOD_DEED_BEFORE_MAGHRIB_MIN = 60
 /** Sadaqah and zakat reminders arrive at 10:00 local time. */
 export const DAY_REMINDER_HOUR = 10
 
@@ -119,7 +122,7 @@ export function extraEventsForDay(place: Place, settings: Settings, offset: numb
   const x = settings.extras
   const out: ExtraEvent[] = []
   let times: DayTimes | null = null
-  if (x.duha || x.athkarMorning || x.athkarEvening || x.duaOfDay || x.quranHourly) {
+  if (x.duha || x.athkarMorning || x.athkarEvening || x.duaOfDay || x.quranHourly || x.goodDeed) {
     const t = dayTimes(place, settings, offset, now)
     times = timesAreOrdered(t) ? t : null
   }
@@ -165,6 +168,16 @@ export function extraEventsForDay(place: Place, settings: Settings, offset: numb
       if (at <= times.fajr || at >= times.isha) continue
       out.push({ key: "quran", hour, at, title: tNow("Time to read some Quran"), body: tNow("Even a few ayahs keep your heart close to it.") })
     }
+  }
+  if (times && x.goodDeed) {
+    const c = civilDay(place, offset, now)
+    const deed = goodDeedOfTheDay(c.year, c.month, c.day)
+    out.push({
+      key: "goodDeed",
+      at: new Date(times.maghrib.getTime() - GOOD_DEED_BEFORE_MAGHRIB_MIN * MIN),
+      title: tNow(deed.question),
+      body: `${tNow(deed.reason)} (${deed.reference})`,
+    })
   }
   if (x.sadaqah) {
     const c = civilDay(place, offset, now)

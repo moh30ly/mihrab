@@ -71,6 +71,13 @@ export function ExtraRemindersPanel({
           checked={x.quranHourly}
           onChange={(v) => set({ quranHourly: v })}
         />
+        <Row
+          id="good-deed"
+          label={t("A good deed for today")}
+          hint={t("A gentle question like “Did you call your parents today?”, an hour before Maghrib.")}
+          checked={x.goodDeed}
+          onChange={(v) => set({ goodDeed: v })}
+        />
         <Row id="sadaqah" label={t("Weekly sadaqah")} hint={t("At 10:00 on the day you choose.")} checked={x.sadaqah} onChange={(v) => set({ sadaqah: v })}>
           {x.sadaqah ? (
             <select
@@ -127,7 +134,7 @@ export function ExtraRemindersPanel({
           ) : null}
         </Row>
       </ul>
-      {!settings.remindersEnabled && (x.duha || x.athkarMorning || x.athkarEvening || x.duaOfDay || x.quranHourly || x.sadaqah || x.zakat) ? (
+      {!settings.remindersEnabled && (x.duha || x.athkarMorning || x.athkarEvening || x.duaOfDay || x.quranHourly || x.goodDeed || x.sadaqah || x.zakat) ? (
         <p className="mt-2 text-sm text-muted-foreground">{t("Turn on reminders above for these to arrive.")}</p>
       ) : null}
     </div>
