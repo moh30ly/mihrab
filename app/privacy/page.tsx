@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/privacy/" },
 }
 
-const UPDATED = "19 November 2026"
+const UPDATED = "20 November 2026"
 
 export default function PrivacyPage() {
   return (
@@ -40,7 +40,7 @@ export default function PrivacyPage() {
         <section>
           <h2>Settings saved on your device</h2>
           <p>
-            Your calculation method, reminder choices, interface language and athkar counts are stored only in your
+            Your calculation method, reminder choices, interface language, athkar counts and memorization progress are stored only in your
             browser’s or the app’s local storage. They stay on your device and are deleted if you clear the app’s data or
             uninstall it.
           </p>
@@ -59,6 +59,17 @@ export default function PrivacyPage() {
           <p>
             The Qibla compass reads your device’s orientation sensors while the compass is on screen. These readings are used
             only on your device and are not stored or sent anywhere.
+          </p>
+        </section>
+
+        <section>
+          <h2>Microphone (Quran memorization)</h2>
+          <p>
+            When you tap Recite on the memorization page, Mihrab asks to use the microphone so it can check your recitation.
+            The listening is done by your device’s own speech recognition: Android’s speech service in the app, or your
+            browser’s on the website. Depending on your device and browser, that service may send the audio to its provider
+            (for example Google) to turn it into text. Mihrab itself does not record, store or send any audio; only the
+            resulting score for each ayah is kept on your device. You can always type the ayah instead.
           </p>
         </section>
 

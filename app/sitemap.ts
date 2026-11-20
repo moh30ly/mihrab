@@ -18,6 +18,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/sadaqah/`, lastModified: "2026-11-19" },
     { url: `${SITE_URL}/privacy/`, lastModified: "2026-11-19" },
     ...SURAHS.map((s) => ({ url: `${SITE_URL}/quran/${s.id}/`, lastModified: "2026-11-19" })),
+    { url: `${SITE_URL}/hifz/`, lastModified: "2026-11-20" },
+    ...SURAHS.map((s) => ({ url: `${SITE_URL}/hifz/${s.id}/`, lastModified: "2026-11-20" })),
     { url: `${SITE_URL}/hadith/`, lastModified: "2026-11-19" },
     ...HADITH_COLLECTIONS.map((c) => ({ url: `${SITE_URL}/hadith/${c.id}/`, lastModified: "2026-11-19" })),
   ]

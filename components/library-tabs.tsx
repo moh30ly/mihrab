@@ -7,10 +7,11 @@ import { cn } from "@/lib/utils"
 
 const TABS = [
   { href: "/quran/", label: "Quran", match: "/quran" },
+  { href: "/hifz/", label: "Memorize", match: "/hifz" },
   { href: "/hadith/", label: "Hadith", match: "/hadith" },
 ]
 
-/** Switches between the Quran and the hadith collections, which share the Quran tab. */
+/** Switches between the Quran, memorisation and the hadith collections, which share the Quran tab. */
 export function LibraryTabs({ className }: { className?: string }) {
   const pathname = usePathname() ?? ""
   const { t } = useT()
