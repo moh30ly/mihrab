@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ChevronLeft, ChevronRight, NotebookPen } from "lucide-react"
+import { OfflineNotice } from "@/components/offline/offline-notice"
 import { QuranSources } from "@/components/quran/quran-sources"
 import { SurahReader } from "@/components/quran/surah-reader"
 import { loadSurahVerses } from "@/lib/quran"
@@ -47,6 +48,8 @@ export default async function SurahPage({ params }: PageProps<"/quran/[surah]">)
           <NotebookPen className="size-4" aria-hidden /> <T k="My notes" />
         </Link>
       </div>
+
+      <OfflineNotice className="mt-4" />
 
       <header className="arch-panel mt-4 px-6 pt-10 pb-7 text-center">
         <p className="text-xs tracking-wide text-brass-bright uppercase">

@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { StarBadge } from "@/components/ornament"
-import { NotebookPen, Search } from "lucide-react"
+import { CloudDownload, NotebookPen, Search } from "lucide-react"
+import { OfflineNotice } from "@/components/offline/offline-notice"
 import { ContinueReading } from "@/components/quran/continue-reading"
 import { Input } from "@/components/ui/input"
 import { type SurahInfo } from "@/lib/quran-index"
@@ -36,6 +37,7 @@ export function SurahList({ surahs }: { surahs: SurahInfo[] }) {
 
   return (
     <div className="mt-6">
+      <OfflineNotice className="mb-4" />
       <ContinueReading className="mb-4" />
       <Link
         href="/quran/notes/"
@@ -46,6 +48,14 @@ export function SurahList({ surahs }: { surahs: SurahInfo[] }) {
         <span className="text-sm text-muted-foreground tabular-nums">
           {noteCount === 0 ? t("No notes yet") : noteCount === 1 ? t("1 note") : t("{n} notes", { n: noteCount })}
         </span>
+      </Link>
+      <Link
+        href="/quran/offline/"
+        className="andalus-card -mt-3 mb-6 flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent"
+      >
+        <CloudDownload className="size-5 shrink-0 text-brass" aria-hidden />
+        <span className="flex-1 font-medium text-ink">{t("Offline and downloads")}</span>
+        <span className="text-sm text-muted-foreground">{t("Tafsir, hadith, recitations")}</span>
       </Link>
 
       <label className="relative block">

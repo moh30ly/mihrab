@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Search } from "lucide-react"
 import { StarBadge } from "@/components/ornament"
 import { Input } from "@/components/ui/input"
 import { fetchLibrary } from "@/lib/library"
+import { DownloadHint } from "@/components/offline/download-hint"
 import {
   bookOf,
   collectionById,
@@ -38,9 +39,10 @@ function useHashView(): View {
 function Loading({ failed }: { failed: boolean }) {
   const { t } = useT()
   return (
-    <p className="py-8 text-center text-muted-foreground">
-      {failed ? t("This collection could not be loaded. Check your connection and try again.") : t("Loading…")}
-    </p>
+    <div className="py-8 text-center text-muted-foreground">
+      <p>{failed ? t("This collection could not be loaded. Check your connection and try again.") : t("Loading…")}</p>
+      {failed ? <DownloadHint /> : null}
+    </div>
   )
 }
 

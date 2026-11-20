@@ -4,6 +4,7 @@
 // reader opens. The website reads them from its own origin; the Android app,
 // whose pages are served from the device, reads them from mihrab.live.
 import { Capacitor } from "@capacitor/core"
+import { localLibraryUrl } from "@/lib/offline"
 
 export const LIBRARY_ORIGIN = "https://mihrab.live"
 
@@ -11,7 +12,16 @@ export const LIBRARY_ORIGIN = "https://mihrab.live"
  * Books that the Android workflows bundle inside the app (see
  * scripts/fetch-library.mjs), so they open without a connection.
  */
-export const OFFLINE_BOOKS = ["irab-muyassar"]
+export const OFFLINE_BOOKS = [
+  "irab-muyassar",
+  "mukhtasar-ar",
+  "mukhtasar-en",
+  "mukhtasar-it",
+  "mukhtasar-es",
+  "mukhtasar-tr",
+  "mukhtasar-zh",
+  "mukhtasar-ja",
+]
 
 export function isBundled(path: string): boolean {
   return OFFLINE_BOOKS.some((id) => path.startsWith(`tafsir/${id}/`))
@@ -28,8 +38,19 @@ async function getJson<T>(url: string, path: string): Promise<T> {
   return (await r.json()) as T
 }
 
-/** Reads a bundled file from the app itself, falling back to mihrab.live for a build without it. */
+/**
+ * Reads a file from the app itself when it is bundled or was downloaded for
+ * offline reading (lib/offline.ts), falling back to mihrab.live.
+ */
 async function load<T>(path: string): Promise<T> {
+  const downloaded = Capacitor.isNativePlatform() ? localLibraryUrl(path) : null
+  if (downloaded) {
+    try {
+      return await getJson<T>(downloaded, path)
+    } catch {
+      // The download was removed from the phone; read it online.
+    }
+  }
   if (Capacitor.isNativePlatform() && isBundled(path)) {
     try {
       return await getJson<T>(libraryUrl(path, true), path)

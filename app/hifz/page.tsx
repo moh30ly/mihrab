@@ -5,6 +5,7 @@ import { LibraryTabs } from "@/components/library-tabs"
 import { Frieze } from "@/components/ornament"
 import { SURAHS } from "@/lib/quran-index"
 import { T } from "@/lib/i18n"
+import { OfflineNotice } from "@/components/offline/offline-notice"
 
 export const metadata: Metadata = {
   title: "Memorize the Quran (hifz) with a recitation checker",
@@ -27,6 +28,7 @@ export default function HifzPage() {
         </p>
       </header>
       <Frieze className="mx-auto mt-4 max-w-sm" />
+      <OfflineNotice className="mt-4" />
       <HifzList surahs={SURAHS} />
     </main>
   )

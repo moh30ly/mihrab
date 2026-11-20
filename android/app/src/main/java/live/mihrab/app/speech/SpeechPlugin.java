@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.speech.RecognitionListener;
+import android.speech.RecognitionSupport;
+import android.speech.RecognitionSupportCallback;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import com.getcapacitor.JSObject;
@@ -17,7 +19,10 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
+import androidx.annotation.RequiresApi;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Listens to a recitation with Android's own speech recogniser, for the memorisation
@@ -35,6 +40,7 @@ public class SpeechPlugin extends Plugin {
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private SpeechRecognizer recognizer;
+    private SpeechRecognizer modelRecognizer;
 
     @PluginMethod
     public void available(PluginCall call) {
@@ -61,17 +67,29 @@ public class SpeechPlugin extends Plugin {
         else call.reject("Microphone permission was denied", "permission");
     }
 
+    private static Intent recognizerIntent(String lang) {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, lang);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, lang);
+        return intent;
+    }
+
     private void begin(PluginCall call) {
         final String lang = call.getString("lang", "ar-SA");
+        // Without a connection, use the phone's own (on-device) recogniser when it has one.
+        final boolean offline = Boolean.TRUE.equals(call.getBoolean("preferOffline", false));
         main.post(() -> {
             try {
                 destroy();
-                recognizer = SpeechRecognizer.createSpeechRecognizer(getContext());
+                if (offline && Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(getContext())) {
+                    recognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(getContext());
+                } else {
+                    recognizer = SpeechRecognizer.createSpeechRecognizer(getContext());
+                }
                 recognizer.setRecognitionListener(new Listener());
-                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, lang);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, lang);
+                Intent intent = recognizerIntent(lang);
+                intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, offline);
                 intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
                 intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
                 intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getContext().getPackageName());
@@ -85,6 +103,93 @@ public class SpeechPlugin extends Plugin {
                 call.reject(e.getMessage(), "start");
             }
         });
+    }
+
+    /**
+     * Whether the phone can recognise the language without a connection:
+     * { status: "installed" | "pending" | "available" | "unsupported" }. "available"
+     * means it can be downloaded with downloadModel. Android 13 and later only.
+     */
+    @PluginMethod
+    public void offlineModel(PluginCall call) {
+        final String lang = call.getString("lang", "ar-SA");
+        if (Build.VERSION.SDK_INT < 33 || !SpeechRecognizer.isOnDeviceRecognitionAvailable(getContext())) {
+            JSObject ret = new JSObject();
+            ret.put("status", "unsupported");
+            call.resolve(ret);
+            return;
+        }
+        main.post(() -> checkModel(call, lang));
+    }
+
+    @RequiresApi(33)
+    private void checkModel(PluginCall call, String lang) {
+        final SpeechRecognizer r = SpeechRecognizer.createOnDeviceSpeechRecognizer(getContext());
+        try {
+            r.checkRecognitionSupport(recognizerIntent(lang), getContext().getMainExecutor(), new RecognitionSupportCallback() {
+                @Override
+                public void onSupportResult(RecognitionSupport support) {
+                    String status = hasLang(support.getInstalledOnDeviceLanguages(), lang)
+                        ? "installed"
+                        : hasLang(support.getPendingOnDeviceLanguages(), lang)
+                            ? "pending"
+                            : hasLang(support.getSupportedOnDeviceLanguages(), lang) ? "available" : "unsupported";
+                    r.destroy();
+                    JSObject ret = new JSObject();
+                    ret.put("status", status);
+                    call.resolve(ret);
+                }
+
+                @Override
+                public void onError(int error) {
+                    r.destroy();
+                    JSObject ret = new JSObject();
+                    ret.put("status", "unsupported");
+                    call.resolve(ret);
+                }
+            });
+        } catch (Exception e) {
+            r.destroy();
+            JSObject ret = new JSObject();
+            ret.put("status", "unsupported");
+            call.resolve(ret);
+        }
+    }
+
+    /** Asks the phone to download its offline model for the language (Android 13 and later). */
+    @PluginMethod
+    public void downloadModel(PluginCall call) {
+        final String lang = call.getString("lang", "ar-SA");
+        if (Build.VERSION.SDK_INT < 33 || !SpeechRecognizer.isOnDeviceRecognitionAvailable(getContext())) {
+            call.reject("Offline speech recognition is not available on this phone", "unsupported");
+            return;
+        }
+        main.post(() -> triggerDownload(call, lang));
+    }
+
+    @RequiresApi(33)
+    private void triggerDownload(PluginCall call, String lang) {
+        try {
+            if (modelRecognizer != null) modelRecognizer.destroy();
+            // Kept until the next request, so the download it hands to the system is not cut off.
+            modelRecognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(getContext());
+            modelRecognizer.triggerModelDownload(recognizerIntent(lang));
+            call.resolve();
+        } catch (Exception e) {
+            call.reject(e.getMessage(), "download");
+        }
+    }
+
+    /** Matches "ar-SA" with "ar-SA", "ar_SA" or plain "ar". */
+    private static boolean hasLang(List<String> langs, String lang) {
+        if (langs == null) return false;
+        String want = lang.replace('_', '-').toLowerCase(Locale.ROOT);
+        String base = want.split("-")[0];
+        for (String l : langs) {
+            String have = l.replace('_', '-').toLowerCase(Locale.ROOT);
+            if (have.equals(want) || have.equals(base)) return true;
+        }
+        return false;
     }
 
     @PluginMethod
@@ -105,7 +210,15 @@ public class SpeechPlugin extends Plugin {
 
     @Override
     protected void handleOnDestroy() {
-        main.post(this::destroy);
+        main.post(this::destroyAll);
+    }
+
+    private void destroyAll() {
+        destroy();
+        if (modelRecognizer != null) {
+            modelRecognizer.destroy();
+            modelRecognizer = null;
+        }
     }
 
     private void destroy() {

@@ -6,6 +6,7 @@ import { HifzSession } from "@/components/hifz/hifz-session"
 import { loadSurahVerses } from "@/lib/quran"
 import { SURAHS, surahById } from "@/lib/quran-index"
 import { T } from "@/lib/i18n"
+import { OfflineNotice } from "@/components/offline/offline-notice"
 
 export const dynamicParams = false
 
@@ -42,6 +43,7 @@ export default async function HifzSurahPage({ params }: PageProps<"/hifz/[surah]
         </Link>
       </div>
 
+      <OfflineNotice className="mt-4" />
       <header className="arch-panel mt-4 px-6 pt-8 pb-6 text-center">
         <p className="text-xs tracking-wide text-brass-bright uppercase">
           <T k="Memorize" /> · <T k="Surah {n}" vars={{ n: info.id }} /> · <T k="{n} ayahs" vars={{ n: info.verses }} />

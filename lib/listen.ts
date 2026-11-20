@@ -11,7 +11,9 @@ import { Capacitor, registerPlugin, type PluginListenerHandle } from "@capacitor
 
 type NativeSpeech = {
   available(): Promise<{ available: boolean; onDevice: boolean }>
-  start(options: { lang: string }): Promise<void>
+  start(options: { lang: string; preferOffline?: boolean }): Promise<void>
+  offlineModel(options: { lang: string }): Promise<{ status: OfflineModel }>
+  downloadModel(options: { lang: string }): Promise<void>
   stop(): Promise<void>
   cancel(): Promise<void>
   addListener(event: "partial" | "result", fn: (e: { text: string }) => void): Promise<PluginListenerHandle>
@@ -20,6 +22,31 @@ type NativeSpeech = {
 }
 
 const NativeSpeech = registerPlugin<NativeSpeech>("MihrabSpeech")
+
+/**
+ * Whether the phone can recognise Arabic without a connection (Android 13 and later):
+ * installed, being downloaded, available to download, or not on this phone.
+ */
+export type OfflineModel = "installed" | "pending" | "available" | "unsupported"
+
+export async function offlineSpeechModel(): Promise<OfflineModel> {
+  if (!Capacitor.isNativePlatform()) return "unsupported"
+  try {
+    return (await NativeSpeech.offlineModel({ lang: LANG })).status
+  } catch {
+    return "unsupported"
+  }
+}
+
+/** Asks Android to download its offline Arabic speech model; the system shows its own progress. */
+export async function downloadSpeechModel(): Promise<boolean> {
+  try {
+    await NativeSpeech.downloadModel({ lang: LANG })
+    return true
+  } catch {
+    return false
+  }
+}
 
 export type ListenError = "unsupported" | "permission" | "network" | "language" | "audio" | "other"
 
@@ -167,7 +194,8 @@ function listenNative(h: ListenHandlers): Listening {
   }
 
   const begin = () =>
-    NativeSpeech.start({ lang: LANG }).catch((e: { code?: string; message?: string }) => {
+    // Offline, the phone's on-device recogniser is used when it has Arabic.
+    NativeSpeech.start({ lang: LANG, preferOffline: typeof navigator !== "undefined" && !navigator.onLine }).catch((e: { code?: string; message?: string }) => {
       failed = e?.code === "permission" ? "permission" : "other"
       detail = e?.message
       active = false
