@@ -1,7 +1,7 @@
 // Copies the offline Quran recitation checker (lib/quran-asr.ts) into the app's web files, so
 // the Android app ships with it. The model is Tarteel's whisper-tiny-ar-quran (Apache-2.0),
 // built by .github/workflows/asr-model.yml as assets of the quran-asr-v1 release.
-// Usage: node scripts/fetch-asr-model.mjs <out dir>   (writes <out>/models/quran-asr/)
+// Usage: node scripts/fetch-asr-model.mjs <out dir> [tiny|base]   (writes <out>/models/quran-asr/)
 import fs from "node:fs/promises"
 import path from "node:path"
 
@@ -21,7 +21,8 @@ const MODEL = [
 const RUNTIME = ["ort/ort-wasm-simd-threaded.jsep.mjs", "ort/ort-wasm-simd-threaded.jsep.wasm", "worker.js"]
 
 const dir = path.join(process.argv[2] ?? "out", "models", "quran-asr")
-const files = [...MODEL.map((f) => [f, `tiny.${f.replaceAll("/", ".")}`]), ...RUNTIME.map((f) => [f, f.replaceAll("/", ".")])]
+const prefix = process.argv[3] === "base" ? "" : "tiny."
+const files = [...MODEL.map((f) => [f, prefix + f.replaceAll("/", ".")]), ...RUNTIME.map((f) => [f, f.replaceAll("/", ".")])]
 let total = 0
 for (const [file, asset] of files) {
   let r
