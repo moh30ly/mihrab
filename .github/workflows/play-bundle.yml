@@ -41,6 +41,8 @@ jobs:
           fi
       - run: npm ci
       - run: npm run build
+      # The concise i'rab is bundled so it works without a connection.
+      - run: node scripts/fetch-library.mjs out tafsir irab-muyassar
       - run: npx cap sync android
       - name: Build signed bundle
         working-directory: android

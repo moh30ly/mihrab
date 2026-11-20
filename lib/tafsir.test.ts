@@ -1,9 +1,19 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { TAFSIRS, defaultTafsir, entryAt, tafsirChunkPath } from "./tafsir"
+import { IRABS, TAFSIRS, defaultIrab, defaultTafsir, entryAt, tafsirById, tafsirChunkPath } from "./tafsir"
 
-test("tafsir ids are unique", () => {
-  assert.equal(new Set(TAFSIRS.map((t) => t.id)).size, TAFSIRS.length)
+test("tafsir and i‘rab ids are unique", () => {
+  const all = [...TAFSIRS, ...IRABS]
+  assert.equal(new Set(all.map((t) => t.id)).size, all.length)
+  assert.equal(new Set(all.map((t) => t.slug)).size, all.length)
+})
+
+test("i‘rab books are Arabic and kept apart from the tafsirs", () => {
+  assert.ok(IRABS.every((b) => b.lang === "ar" && b.dir === "rtl"))
+  assert.equal(defaultIrab().id, "irab-muyassar")
+  assert.equal(tafsirById("irab-darwish", "irab")?.slug, "i-rab-al-quran-li-al-darwish")
+  assert.equal(tafsirById("irab-darwish"), undefined)
+  assert.equal(tafsirById("saadi", "irab"), undefined)
 })
 
 test("defaultTafsir follows the interface language, else English", () => {

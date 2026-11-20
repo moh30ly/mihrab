@@ -7,7 +7,11 @@
 // Downloads are pinned to a release and cached in .cache/library/, so a
 // second run works offline. The texts are written unchanged.
 //
-// Usage: node scripts/fetch-library.mjs [out-dir] [tafsir|hadith]   (default: public, both)
+// The Android workflows also run it with a list of book ids, which writes only
+// those books: they are the ones bundled in the app so they work offline
+// (OFFLINE_BOOKS in lib/library.ts).
+//
+// Usage: node scripts/fetch-library.mjs [out-dir] [tafsir|hadith] [ids,...]   (default: public, both, all)
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
@@ -67,6 +71,12 @@ async function tafsir() {
   const list = [...src.matchAll(/^\s*id: "([\w-]+)",[\s\S]*?slug: "([\w-]+)"/gm)].map((m) => [m[1], m[2]])
   for (const m of src.matchAll(/mukhtasar\("(\w+)", "[^"]*", "([\w-]+)"/g)) list.push([`mukhtasar-${m[1]}`, m[2]])
   if (list.length < 2) throw new Error("No tafsir editions found in lib/tafsir.ts")
+  const ids = process.argv[4]?.split(",")
+  if (ids) {
+    const missing = ids.filter((id) => !list.some(([x]) => x === id))
+    if (missing.length) throw new Error(`Unknown tafsir ids: ${missing.join(", ")}`)
+    list.splice(0, list.length, ...list.filter(([id]) => ids.includes(id)))
+  }
 
   // Ayahs the dataset left empty on purpose because the source attaches the
   // wrong commentary to them; these must not point back to an earlier ayah.
@@ -75,8 +85,9 @@ async function tafsir() {
   const noText = (slug, surah, ayah) =>
     knownErrors.some((e) => e.slugs.includes(slug) && e.ayahs.includes(`${surah}:${ayah}`))
 
-  rmSync(join(outDir, "tafsir"), { recursive: true, force: true })
+  if (!ids) rmSync(join(outDir, "tafsir"), { recursive: true, force: true })
   for (const [id, slug] of list) {
+    rmSync(join(outDir, "tafsir", id), { recursive: true, force: true })
     let chars = 0
     await pool(surahs, 8, async (s) => {
       const url = `https://raw.githubusercontent.com/spa5k/tafsir_api/${TAFSIR_RELEASE}/tafsir/${slug}/${s.id}.json`
