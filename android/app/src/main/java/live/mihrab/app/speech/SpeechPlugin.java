@@ -1,6 +1,7 @@
 package live.mihrab.app.speech;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,9 +17,11 @@ import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
+import androidx.activity.result.ActivityResult;
 import androidx.annotation.RequiresApi;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,18 +45,71 @@ public class SpeechPlugin extends Plugin {
     private SpeechRecognizer recognizer;
     private SpeechRecognizer modelRecognizer;
 
+    /** A recognition service the app can bind to (live words while reciting). */
+    private boolean serviceAvailable() {
+        boolean ok = SpeechRecognizer.isRecognitionAvailable(getContext());
+        boolean onDevice = Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(getContext());
+        return ok || onDevice;
+    }
+
+    /** The system's own "speak now" screen, which many phones have even without a bindable service. */
+    private boolean dialogAvailable() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        return intent.resolveActivity(getContext().getPackageManager()) != null;
+    }
+
     @PluginMethod
     public void available(PluginCall call) {
-        boolean ok = SpeechRecognizer.isRecognitionAvailable(getContext());
+        boolean service = serviceAvailable();
+        boolean dialog = dialogAvailable();
         boolean onDevice = Build.VERSION.SDK_INT >= 33 && SpeechRecognizer.isOnDeviceRecognitionAvailable(getContext());
         JSObject ret = new JSObject();
-        ret.put("available", ok || onDevice);
+        ret.put("available", service || dialog);
+        ret.put("service", service);
+        ret.put("dialog", dialog);
         ret.put("onDevice", onDevice);
+        call.resolve(ret);
+    }
+
+    /**
+     * Listens through the system's "speak now" screen and resolves { text } once it closes.
+     * Used when no recognition service can be bound, or when it fails to start.
+     */
+    @PluginMethod
+    public void recognizeDialog(PluginCall call) {
+        if (!dialogAvailable()) {
+            call.reject("No speech recognition on this phone", "unavailable");
+            return;
+        }
+        Intent intent = recognizerIntent(call.getString("lang", "ar-SA"));
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, call.getString("prompt", ""));
+        try {
+            startActivityForResult(call, intent, "dialogResult");
+        } catch (Exception e) {
+            call.reject(e.getMessage(), "unavailable");
+        }
+    }
+
+    @ActivityCallback
+    private void dialogResult(PluginCall call, ActivityResult result) {
+        if (call == null) return;
+        JSObject ret = new JSObject();
+        String text = "";
+        if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+            ArrayList<String> list = result.getData().getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            if (list != null && !list.isEmpty()) text = list.get(0);
+        }
+        ret.put("text", text);
         call.resolve(ret);
     }
 
     @PluginMethod
     public void start(PluginCall call) {
+        if (!serviceAvailable()) {
+            call.reject("No speech recognition service to bind to", "unavailable");
+            return;
+        }
         if (getPermissionState("microphone") != PermissionState.GRANTED) {
             requestPermissionForAlias("microphone", call, "afterPermission");
             return;
@@ -79,10 +135,15 @@ public class SpeechPlugin extends Plugin {
         final String lang = call.getString("lang", "ar-SA");
         // Without a connection, use the phone's own (on-device) recogniser when it has one.
         final boolean offline = Boolean.TRUE.equals(call.getBoolean("preferOffline", false));
+        if (!serviceAvailable()) {
+            call.reject("No speech recognition service to bind to", "unavailable");
+            return;
+        }
         main.post(() -> {
             try {
                 destroy();
-                if (offline && Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(getContext())) {
+                boolean bindable = SpeechRecognizer.isRecognitionAvailable(getContext());
+                if ((offline || !bindable) && Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(getContext())) {
                     recognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(getContext());
                 } else {
                     recognizer = SpeechRecognizer.createSpeechRecognizer(getContext());

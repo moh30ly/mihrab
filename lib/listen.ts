@@ -10,7 +10,8 @@
 import { Capacitor, registerPlugin, type PluginListenerHandle } from "@capacitor/core"
 
 type NativeSpeech = {
-  available(): Promise<{ available: boolean; onDevice: boolean }>
+  available(): Promise<{ available: boolean; onDevice: boolean; service?: boolean; dialog?: boolean }>
+  recognizeDialog(options: { lang: string; prompt?: string }): Promise<{ text: string }>
   start(options: { lang: string; preferOffline?: boolean }): Promise<void>
   offlineModel(options: { lang: string }): Promise<{ status: OfflineModel }>
   downloadModel(options: { lang: string }): Promise<void>
@@ -185,6 +186,10 @@ function listenNative(h: ListenHandlers): Listening {
   const handles: Promise<PluginListenerHandle>[] = []
   const join = (a: string, b: string) => (a && b ? `${a} ${b}` : a || b).trim()
 
+  let dialogMode = false
+  let wantDialog = false
+  let heardAnything = false
+
   const finish = () => {
     if (finished) return
     finished = true
@@ -193,9 +198,29 @@ function listenNative(h: ListenHandlers): Listening {
     h.onEnd(failed, detail)
   }
 
+  // Many phones (and Android without a bindable recognition service) still have the
+  // system's "speak now" screen. It gives no live words, only the text once it closes.
+  const dialog = () => {
+    dialogMode = true
+    active = false
+    failed = undefined
+    detail = undefined
+    for (const p of handles) void p.then((x) => x.remove()).catch(() => {})
+    NativeSpeech.recognizeDialog({ lang: LANG })
+      .then(({ text }) => {
+        committed = join(committed, text)
+      })
+      .catch((e: { message?: string }) => {
+        failed = "unsupported"
+        detail = e?.message
+      })
+      .finally(finish)
+  }
+
   const begin = () =>
     // Offline, the phone's on-device recogniser is used when it has Arabic.
     NativeSpeech.start({ lang: LANG, preferOffline: typeof navigator !== "undefined" && !navigator.onLine }).catch((e: { code?: string; message?: string }) => {
+      if (e?.code === "unavailable" && !heardAnything) return dialog()
       failed = e?.code === "permission" ? "permission" : "other"
       detail = e?.message
       active = false
@@ -204,10 +229,12 @@ function listenNative(h: ListenHandlers): Listening {
 
   handles.push(
     NativeSpeech.addListener("partial", ({ text }) => {
+      if (text) heardAnything = true
       current = text
       h.onText(join(committed, current))
     }),
     NativeSpeech.addListener("result", ({ text }) => {
+      if (text) heardAnything = true
       committed = join(committed, text || current)
       current = ""
       h.onText(committed)
@@ -220,11 +247,19 @@ function listenNative(h: ListenHandlers): Listening {
         return
       }
       if (code === "busy") return
+      // The bound service refused before hearing anything: try the system screen instead.
+      if (!heardAnything && !committed && code !== "permission" && code !== "network") {
+        wantDialog = true
+        active = false
+        return
+      }
       failed = (["permission", "network", "language", "audio"] as const).find((c) => c === code) ?? "other"
       detail = message
       active = false
     }),
     NativeSpeech.addListener("end", () => {
+      if (dialogMode) return
+      if (wantDialog) return dialog()
       if (active) void begin()
       else finish()
     }),
@@ -233,6 +268,8 @@ function listenNative(h: ListenHandlers): Listening {
 
   return {
     stop: () => {
+      // The system screen closes by itself.
+      if (dialogMode) return
       active = false
       void NativeSpeech.stop()
         .catch(() => {})
