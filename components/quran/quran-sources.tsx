@@ -45,6 +45,14 @@ export function QuranSources() {
         al-Muyassar is included and works without a connection; the others are loaded when you open them.
       </p>
       <p>
+        Recitations: Saad Al-Ghamdi, and Muhammad Siddiq Al-Minshawi and Abdul Basit Abdul Samad (murattal and mujawwad), ayah by
+        ayah from{" "}
+        <a className="underline underline-offset-2" href="https://everyayah.com/" rel="noopener">
+          EveryAyah
+        </a>
+        . The audio is streamed from there when you press play and needs an internet connection.
+      </p>
+      <p>
         {QURAN_SOURCES.dataset}{" "}
         <a className="underline underline-offset-2" href="https://github.com/risan/quran-json" rel="noopener">
           github.com/risan/quran-json

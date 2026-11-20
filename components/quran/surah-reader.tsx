@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { BookOpen, BookOpenText, Bookmark, Languages, NotebookPen, ScrollText } from "lucide-react"
+import { BookOpen, BookOpenText, Bookmark, Headphones, Languages, NotebookPen, Pause, Play, ScrollText } from "lucide-react"
 import { BookView, type BookVerse } from "@/components/quran/book-view"
 import { NoteSheet } from "@/components/quran/note-sheet"
+import { RecitationBar } from "@/components/quran/recitation-bar"
+import { useRecitation } from "@/components/quran/use-recitation"
 import { TafsirSheet } from "@/components/quran/tafsir-sheet"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -71,6 +73,10 @@ export function SurahReader({
   const [tracking, setTracking] = useState(false)
   const notes = useNotes()
   const ref = useRef<HTMLDivElement>(null)
+  const recitation = useRecitation({ surahId, surahName, total: verses.length })
+  /** The ayah being recited (0 is the basmala), highlighted and kept in view. */
+  const reciting = recitation.ayah
+  const recitingNow = recitation.status === "playing" || recitation.status === "loading"
 
   useEffect(() => {
     // Preferences and the saved place live in localStorage, which only exists after hydration.
@@ -147,6 +153,16 @@ export function SurahReader({
     return () => observer.disconnect()
   }, [surahId, prefs.mode, tracking])
 
+  // Keep the ayah being recited on screen in the scrolling view; the book turns its own pages.
+  useEffect(() => {
+    if (reciting == null || prefs.mode !== "scroll") return
+    const el = reciting === 0 ? ref.current?.querySelector<HTMLElement>("[data-basmala]") : document.getElementById(`ayah-${reciting}`)
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    // Below the sticky toolbar and above the player and tab bar.
+    if (r.top < 130 || r.bottom > window.innerHeight - 220) el.scrollIntoView({ block: "center", behavior: "smooth" })
+  }, [reciting, prefs.mode])
+
   const info = translationByCode(prefs.lang) ?? TRANSLATIONS[0]
   const texts = prefs.lang === "en" ? null : loaded?.key === key ? loaded.texts : null
   const loading = prefs.lang !== "en" && !texts && failed !== key
@@ -187,7 +203,12 @@ export function SurahReader({
   }
 
   return (
-    <div ref={ref} data-size={prefs.size} data-translation={prefs.translation ? "on" : "off"} className="quran-reader mt-6">
+    <div
+      ref={ref}
+      data-size={prefs.size}
+      data-translation={prefs.translation ? "on" : "off"}
+      className={cn("quran-reader mt-6", reciting != null && "has-player pb-36")}
+    >
       <div className={cn("z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-[1.5rem] border border-gold/50 bg-card/95 shadow-sm px-4 py-2 backdrop-blur", !book && "sticky top-14")}>
         <div className="flex items-center gap-2">
           <Switch
@@ -233,6 +254,18 @@ export function SurahReader({
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={() => (reciting == null ? recitation.play(1) : recitation.toggle())}
+          aria-pressed={recitingNow}
+          className={cn(
+            "inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm font-medium",
+            recitingNow ? "border-grove bg-grove text-[#f6f1e6]" : "border-border text-ink hover:bg-secondary",
+          )}
+        >
+          {recitingNow ? <Pause className="size-4 fill-current" aria-hidden /> : <Headphones className="size-4" aria-hidden />}
+          {recitingNow ? t("Pause") : t("Listen")}
+        </button>
         <div role="group" aria-label={t("Arabic text size")} className="flex gap-1">
           {SIZES.map((label, i) => (
             <button
@@ -291,7 +324,7 @@ export function SurahReader({
           verses={bookVerses}
           bismillah={bismillah}
           showTranslation={prefs.translation}
-          layoutKey={`${prefs.size}/${prefs.translation}/${texts ? key : "en"}`}
+          layoutKey={`${prefs.size}/${prefs.translation}/${texts ? key : "en"}/${reciting != null}`}
           focusAyah={tafsirAyah ?? irabAyah ?? noteAyah}
           leftOff={leftOff?.ayah ?? null}
           tracking={tracking}
@@ -300,10 +333,17 @@ export function SurahReader({
           onTafsir={setTafsirAyah}
           onIrab={setIrabAyah}
           onNote={setNoteAyah}
+          recitingAyah={reciting}
+          onListen={recitation.play}
         />
       ) : null}
       {!book && bismillah ? (
-        <p lang="ar" dir="rtl" className="quran-text py-6 text-center text-grove">
+        <p
+          lang="ar"
+          dir="rtl"
+          data-basmala
+          className={cn("quran-text my-2 rounded-2xl py-4 text-center text-grove transition-colors", reciting === 0 && "is-reciting")}
+        >
           {bismillah}
         </p>
       ) : null}
@@ -311,7 +351,13 @@ export function SurahReader({
         {verses.map((v, i) => {
           const note = noteOf(v.number)
           return (
-            <li key={v.number} id={`ayah-${v.number}`} data-ayah={v.number} className="scroll-mt-44 py-5">
+            <li
+              key={v.number}
+              id={`ayah-${v.number}`}
+              data-ayah={v.number}
+              aria-current={reciting === v.number ? "true" : undefined}
+              className={cn("scroll-mt-44 py-5 transition-colors", reciting === v.number && "is-reciting -mx-3 rounded-2xl px-3")}
+            >
               {leftOff?.ayah === v.number ? (
                 <p className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-gold/60 bg-gold/15 px-3 py-1 text-xs font-medium text-brass">
                   <Bookmark className="size-3.5 fill-gold/50" aria-hidden />
@@ -339,6 +385,19 @@ export function SurahReader({
                 {translationOf(v, i)}
               </p>
               <div className="mt-2 flex flex-wrap gap-1">
+                <button
+                  type="button"
+                  onClick={() => (reciting === v.number ? recitation.toggle() : recitation.play(v.number))}
+                  aria-label={t("Listen to ayah {n}", { n: `${surahId}:${v.number}` })}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full px-2 text-sm text-brass hover:bg-secondary"
+                >
+                  {reciting === v.number && recitingNow ? (
+                    <Pause className="size-4 fill-current" aria-hidden />
+                  ) : (
+                    <Play className="size-4" aria-hidden />
+                  )}
+                  {reciting === v.number && recitingNow ? t("Pause") : t("Listen")}
+                </button>
                 <button
                   type="button"
                   onClick={() => setTafsirAyah(v.number)}
@@ -386,6 +445,7 @@ export function SurahReader({
           )
         })}
       </ol>
+      <RecitationBar surahId={surahId} recitation={recitation} />
       <TafsirSheet
         surahId={surahId}
         ayahCount={verses.length}
