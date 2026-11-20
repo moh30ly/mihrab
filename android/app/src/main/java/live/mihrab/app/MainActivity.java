@@ -14,5 +14,7 @@ public class MainActivity extends BridgeActivity {
         // The memorisation page listens to recitations through this plugin.
         registerPlugin(SpeechPlugin.class);
         super.onCreate(savedInstanceState);
+        // Quran recitations go on from one ayah to the next without a tap for each.
+        getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);
     }
 }

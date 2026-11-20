@@ -241,6 +241,10 @@
   user-select: none;
   -webkit-user-select: none;
 }
+/* Leave room for the recitation player below the page. */
+.quran-reader.has-player .book-viewport {
+  height: max(16rem, calc(100dvh - 26rem));
+}
 .book-pages {
   column-fill: auto;
   will-change: transform;
@@ -269,5 +273,13 @@
   transition: background-color 150ms;
 }
 .book-ayah.is-selected {
+  background-color: color-mix(in oklab, var(--color-gold, #d2a24c) 22%, transparent);
+}
+/* The ayah being recited. */
+.is-reciting {
+  background-color: color-mix(in oklab, var(--color-grove, #123f3c) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-grove, #123f3c) 30%, transparent);
+}
+.book-ayah.is-reciting.is-selected {
   background-color: color-mix(in oklab, var(--color-gold, #d2a24c) 22%, transparent);
 }

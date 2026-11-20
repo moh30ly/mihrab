@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { BookOpenText, Bookmark, ChevronLeft, ChevronRight, Languages, NotebookPen, X } from "lucide-react"
+import { BookOpenText, Bookmark, ChevronLeft, ChevronRight, Languages, NotebookPen, Play, X } from "lucide-react"
 import { surahById } from "@/lib/quran-index"
 import { saveLastRead } from "@/lib/quran-notes"
 import { useT } from "@/lib/i18n"
@@ -42,6 +42,8 @@ export function BookView({
   onTafsir,
   onIrab,
   onNote,
+  recitingAyah = null,
+  onListen,
 }: {
   surahId: number
   surahName: string
@@ -62,6 +64,9 @@ export function BookView({
   onTafsir: (ayah: number) => void
   onIrab: (ayah: number) => void
   onNote: (ayah: number) => void
+  /** The ayah being recited (0 is the basmala); its page is shown as the recitation moves on. */
+  recitingAyah?: number | null
+  onListen?: (ayah: number) => void
 }) {
   const { t } = useT()
   const router = useRouter()
@@ -182,6 +187,19 @@ export function BookView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusAyah, width, pageOfAyah, pageOfRect])
 
+  // Follow the recitation from page to page.
+  useEffect(() => {
+    if (recitingAyah == null || width <= 0) return
+    const n = Math.max(1, recitingAyah)
+    const el = pagesRef.current?.querySelector<HTMLElement>(`[data-ayah="${n}"]`)
+    const shown = Array.from(el?.getClientRects() ?? []).some((r) => pageOfRect(r) === page)
+    if (shown) return
+    anchor.current = n
+    setPage(pageOfAyah(n))
+    // Only a new ayah moves the page, so the reader can still turn pages while listening.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recitingAyah, width, pageOfAyah, pageOfRect])
+
   const prevSurah = surahById(surahId - 1)
   const nextSurah = surahById(surahId + 1)
 
@@ -296,13 +314,13 @@ export function BookView({
               }}
             >
               {bismillah ? (
-                <p lang="ar" className="quran-text book-bismillah text-center text-grove">
+                <p lang="ar" className={cn("quran-text book-bismillah text-center text-grove", recitingAyah === 0 && "is-reciting")}>
                   {bismillah}
                 </p>
               ) : null}
               {showTranslation ? (
                 verses.map((v) => (
-                  <div key={v.number} data-ayah={v.number} className={cn("book-ayah", selected === v.number && "is-selected")}>
+                  <div key={v.number} data-ayah={v.number} className={cn("book-ayah", selected === v.number && "is-selected", recitingAyah === v.number && "is-reciting")}>
                     {leftOff === v.number ? <LeftOffMark label={t("You left off here")} block /> : null}
                     <p lang="ar" className="quran-text text-ink">
                       {v.arabic}
@@ -330,7 +348,7 @@ export function BookView({
               ) : (
                 <p lang="ar" className="quran-text book-flow text-ink">
                   {verses.map((v) => (
-                    <span key={v.number} data-ayah={v.number} className={cn("book-ayah", selected === v.number && "is-selected")}>
+                    <span key={v.number} data-ayah={v.number} className={cn("book-ayah", selected === v.number && "is-selected", recitingAyah === v.number && "is-reciting")}>
                       {leftOff === v.number ? <LeftOffMark label={t("You left off here")} /> : null}
                       {v.arabic}
                       <span className="ayah-mark text-brass" aria-label={t("Ayah {n}", { n: v.number })}>
@@ -356,6 +374,20 @@ export function BookView({
               {surahId}:{selected}
             </span>
             <span className="flex-1" />
+            {onListen ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onListen(selected)
+                  setSelected(null)
+                }}
+                aria-label={t("Listen to ayah {n}", { n: `${surahId}:${selected}` })}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm text-brass hover:bg-secondary"
+              >
+                <Play className="size-4" aria-hidden />
+                <span className="hidden min-[400px]:inline">{t("Listen")}</span>
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => onTafsir(selected)}
@@ -425,7 +457,7 @@ export function BookView({
           <ChevronLeft className="size-5" aria-hidden />
         </button>
       </div>
-      <p className="mt-2 text-center text-xs text-muted-foreground">{t("Swipe or use the arrows to turn the page. Tap an ayah for its tafsir, i‘rab or your note.")}</p>
+      <p className="mt-2 text-center text-xs text-muted-foreground">{t("Swipe or use the arrows to turn the page. Tap an ayah to listen to it, or for its tafsir, i‘rab or your note.")}</p>
     </div>
   )
 }

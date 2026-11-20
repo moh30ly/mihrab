@@ -16,6 +16,8 @@ import {
   type WordResult,
 } from "@/lib/hifz"
 import { canListen, listen, type ListenError, type Listening } from "@/lib/listen"
+import { ReciterSelect } from "@/components/quran/recitation-bar"
+import { ayahAudioUrl, loadRecitationPrefs, playAyahOnce, reciterById, saveRecitationPrefs } from "@/lib/recitation"
 import { NoArabicVoiceError, speakArabic, stopSpeaking } from "@/lib/speak"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
@@ -84,6 +86,9 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
   const [voiceError, setVoiceError] = useState(false)
   const listening = useRef<Listening | null>(null)
   const playRun = useRef(0)
+  const [reciter, setReciterState] = useState<string>(() => reciterById(null).id)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
   const { progress, update: updateProgress } = useHifzProgress()
 
   useEffect(() => {
@@ -108,6 +113,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     setRange({ from, to })
     setAyah(at >= from && at <= to ? at : from)
     /* eslint-enable react-hooks/set-state-in-effect */
+    setReciterState(loadRecitationPrefs().reciter)
     void canListen().then(setListenSupported)
   }, [surahId, total])
 
@@ -120,6 +126,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     () => () => {
       listening.current?.stop()
       playRun.current++
+      abortRef.current?.abort()
       void stopSpeaking()
     },
     [],
@@ -242,8 +249,27 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
 
   const stopPlaying = async () => {
     playRun.current++
+    abortRef.current?.abort()
     setPlaying(false)
     await stopSpeaking()
+  }
+
+  const setReciter = (id: string) => {
+    setReciterState(id)
+    saveRecitationPrefs({ ...loadRecitationPrefs(), reciter: id })
+    if (playing) void stopPlaying()
+  }
+
+  /** The reciter's recording of the ayah; the device's voice if it can't be loaded (offline). */
+  const recite = async (n: number, text: string, run: number) => {
+    const audio = (audioRef.current ??= new Audio())
+    const abort = new AbortController()
+    abortRef.current = abort
+    try {
+      await playAyahOnce(audio, ayahAudioUrl(reciterById(reciter), surahId, n), abort.signal)
+    } catch {
+      if (run === playRun.current) await speakArabic(text)
+    }
   }
 
   const play = async () => {
@@ -255,7 +281,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
       for (let i = 0; i < prefs.repeat && run === playRun.current; i++) {
         for (const v of shown) {
           if (run !== playRun.current) break
-          await speakArabic(v.arabic)
+          await recite(v.number, v.arabic, run)
         }
       }
     } catch (e) {
@@ -586,6 +612,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
                 ))}
               </select>
             </span>
+            <ReciterSelect value={reciter} onChange={setReciter} className="h-12 max-w-[14rem]" />
             {prefs.level > 0 && mode !== "result" ? (
               <button
                 type="button"

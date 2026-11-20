@@ -83,6 +83,14 @@ export default function PrivacyPage() {
             </a>
             . The Android app ships with its content built in and does not send your data to any server.
           </p>
+          <p>
+            When you press Listen on a surah, the recitation is streamed ayah by ayah from{" "}
+            <a className="underline underline-offset-2" href="https://everyayah.com/" rel="noopener">
+              everyayah.com
+            </a>
+            , which, like any web server, sees your IP address and which ayah file is requested. Nothing else is sent, and nothing
+            is requested until you press play.
+          </p>
         </section>
 
         <section>
