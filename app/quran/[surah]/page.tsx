@@ -59,7 +59,7 @@ export default async function SurahPage({ params }: PageProps<"/quran/[surah]">)
         </h1>
       </header>
 
-      <SurahReader surahId={id} verses={verses} bismillah={showBismillah ? BISMILLAH : null} />
+      <SurahReader surahId={id} surahName={info.name} verses={verses} bismillah={showBismillah ? BISMILLAH : null} />
 
       <nav aria-label="Surahs" dir="ltr" className="mt-8 flex items-center justify-between gap-3">
         {prev ? (
