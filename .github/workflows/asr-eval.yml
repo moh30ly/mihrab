@@ -7,7 +7,7 @@ name: Recitation checker accuracy
 on:
   workflow_dispatch:
   pull_request:
-    paths: [scripts/eval-asr.ts, scripts/fetch-asr-model.mjs, lib/hifz.ts, .github/workflows/asr-eval.yml]
+    paths: [scripts/eval-asr.mts, scripts/fetch-asr-model.mjs, lib/hifz.ts, .github/workflows/asr-eval.yml]
 
 jobs:
   eval:
@@ -36,4 +36,4 @@ jobs:
             done
           done
           ls clips | wc -l
-      - run: npx tsx scripts/eval-asr.ts clips models-tiny models-base
+      - run: npx tsx scripts/eval-asr.mts clips models-tiny models-base

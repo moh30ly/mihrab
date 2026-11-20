@@ -2,12 +2,12 @@
 // ayah recited correctly, so every word should come out "correct" or "close". Runs each model
 // on each clip both whole and cut at pauses the way the app's microphone code cuts it
 // (lib/quran-asr.ts), and scores the text with the app's own matching (lib/hifz.ts).
-// Usage: npx tsx scripts/eval-asr.ts <clips dir> <model dir>...
+// Usage: npx tsx scripts/eval-asr.mts <clips dir> <model dir>...
 // Clips are 16 kHz mono float32 files named <reciter>__<sss><aaa>__<condition>.pcm.
 import fs from "node:fs"
 import path from "node:path"
 import { env, pipeline } from "@huggingface/transformers"
-import { arabicWords, compareRecitation } from "../lib/hifz"
+import { arabicWords, compareRecitation } from "../lib/hifz.ts"
 
 const [clipsDir, ...modelDirs] = process.argv.slice(2)
 const RATE = 16000
