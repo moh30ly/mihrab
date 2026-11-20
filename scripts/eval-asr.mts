@@ -7,7 +7,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import { env, pipeline } from "@huggingface/transformers"
-import { arabicWords, compareRecitation } from "../lib/hifz.ts"
+import { arabicWords, compareRecitation } from "../lib/hifz"
 
 const [clipsDir, ...modelDirs] = process.argv.slice(2)
 const RATE = 16000
