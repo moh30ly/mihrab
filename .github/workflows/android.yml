@@ -26,6 +26,8 @@ jobs:
       # GitHub's Ubuntu runners ship the Android SDK (ANDROID_HOME); Gradle fetches any missing platform.
       - run: npm ci
       - run: npm run build
+      # The concise i'rab is bundled so it works without a connection.
+      - run: node scripts/fetch-library.mjs out tafsir irab-muyassar
       - run: npx cap sync android
       - name: Build debug APK
         working-directory: android

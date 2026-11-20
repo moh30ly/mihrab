@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { BookOpenText } from "lucide-react"
+import { BookOpenText, Languages } from "lucide-react"
 import { TafsirSheet } from "@/components/quran/tafsir-sheet"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -48,6 +48,7 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
   const [loaded, setLoaded] = useState<{ key: string; texts: (string | null)[] } | null>(null)
   const [failed, setFailed] = useState<string | null>(null)
   const [tafsirAyah, setTafsirAyah] = useState<number | null>(null)
+  const [irabAyah, setIrabAyah] = useState<number | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -196,15 +197,26 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
                     ? `↑ ${surahId}:${sharedFrom(i)}`
                     : translated}
               </p>
-              <button
-                type="button"
-                onClick={() => setTafsirAyah(v.number)}
-                aria-label={t("Tafsir of ayah {n}", { n: `${surahId}:${v.number}` })}
-                className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-full px-2 text-sm text-brass hover:bg-secondary"
-              >
-                <BookOpenText className="size-4" aria-hidden />
-                {t("Tafsir")}
-              </button>
+              <div className="mt-2 flex flex-wrap gap-1">
+                <button
+                  type="button"
+                  onClick={() => setTafsirAyah(v.number)}
+                  aria-label={t("Tafsir of ayah {n}", { n: `${surahId}:${v.number}` })}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full px-2 text-sm text-brass hover:bg-secondary"
+                >
+                  <BookOpenText className="size-4" aria-hidden />
+                  {t("Tafsir")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIrabAyah(v.number)}
+                  aria-label={t("I‘rab of ayah {n}", { n: `${surahId}:${v.number}` })}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full px-2 text-sm text-brass hover:bg-secondary"
+                >
+                  <Languages className="size-4" aria-hidden />
+                  {t("I‘rab")}
+                </button>
+              </div>
             </li>
           )
         })}
@@ -216,6 +228,15 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
         arabic={tafsirAyah ? verses[tafsirAyah - 1]?.arabic ?? null : null}
         onAyahChange={setTafsirAyah}
         onClose={() => setTafsirAyah(null)}
+      />
+      <TafsirSheet
+        kind="irab"
+        surahId={surahId}
+        ayahCount={verses.length}
+        ayah={irabAyah}
+        arabic={irabAyah ? verses[irabAyah - 1]?.arabic ?? null : null}
+        onAyahChange={setIrabAyah}
+        onClose={() => setIrabAyah(null)}
       />
     </div>
   )

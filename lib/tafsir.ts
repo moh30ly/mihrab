@@ -92,8 +92,75 @@ export const TAFSIRS: TafsirInfo[] = [
   mukhtasar("ja", "クルアーン簡潔注釈", "japanese-mokhtasar", 265),
 ]
 
-export function tafsirById(id: string): TafsirInfo | undefined {
-  return TAFSIRS.find((t) => t.id === id)
+// I‘rab (grammatical analysis) books, shown from their own button in the reader.
+// They come from the same dataset and use the same file layout as the tafsirs.
+// All are in Arabic, since i‘rab explains the grammar of the Arabic words.
+export const IRABS: TafsirInfo[] = [
+  {
+    id: "irab-muyassar",
+    lang: "ar",
+    dir: "rtl",
+    name: "الإعراب الميسر",
+    english: "Al-I‘rab al-Muyassar (concise word-by-word i‘rab)",
+    slug: "al-i-rab-al-muyassar",
+    source: QUL,
+    sourceUrl: qul(504),
+  },
+  {
+    id: "irab-jadwal",
+    lang: "ar",
+    dir: "rtl",
+    name: "الجدول في إعراب القرآن الكريم (محمود صافي)",
+    english: "Al-Jadwal fi I‘rab al-Quran by Mahmud Safi (d. 1376 AH)",
+    slug: "al-jadwal-fi-i-rab-al-quran",
+    source: QUL,
+    sourceUrl: qul(520),
+  },
+  {
+    id: "irab-darwish",
+    lang: "ar",
+    dir: "rtl",
+    name: "إعراب القرآن وبيانه (محيي الدين درويش)",
+    english: "I‘rab al-Quran wa Bayanuh by Muhyi al-Din Darwish (d. 1403 AH)",
+    slug: "i-rab-al-quran-li-al-darwish",
+    source: QUL,
+    sourceUrl: qul(506),
+  },
+  {
+    id: "irab-daas",
+    lang: "ar",
+    dir: "rtl",
+    name: "إعراب القرآن الكريم (الدعاس)",
+    english: "I‘rab al-Quran al-Karim by Ahmad ‘Ubayd al-Da‘‘as and co-authors",
+    slug: "alrab-al-quran-li-da-as",
+    source: QUL,
+    sourceUrl: qul(515),
+  },
+  {
+    id: "irab-samin",
+    lang: "ar",
+    dir: "rtl",
+    name: "الدر المصون في علوم الكتاب المكنون (السمين الحلبي)",
+    english: "Al-Durr al-Masun by al-Samin al-Halabi (d. 756 AH)",
+    slug: "al-dur-al-masun-lil-samin-al-halabi",
+    source: QUL,
+    sourceUrl: qul(505),
+  },
+]
+
+export type BookKind = "tafsir" | "irab"
+
+export function booksOf(kind: BookKind): TafsirInfo[] {
+  return kind === "irab" ? IRABS : TAFSIRS
+}
+
+export function tafsirById(id: string, kind: BookKind = "tafsir"): TafsirInfo | undefined {
+  return booksOf(kind).find((t) => t.id === id)
+}
+
+/** The i‘rab to open first: the concise one. */
+export function defaultIrab(): TafsirInfo {
+  return IRABS[0]
 }
 
 /** The commentary to open first: one in the reader's language, else English. */

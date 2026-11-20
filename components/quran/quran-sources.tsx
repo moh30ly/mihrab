@@ -39,6 +39,12 @@ export function QuranSources() {
         dataset. The commentaries are shown as published and are loaded only when you open one.
       </p>
       <p>
+        I‘rab (grammatical analysis), in Arabic: al-I‘rab al-Muyassar, al-Jadwal fi I‘rab al-Quran by Mahmud Safi, I‘rab al-Quran wa
+        Bayanuh by Muhyi al-Din Darwish, I‘rab al-Quran al-Karim by al-Da‘‘as, Hamidan and al-Qasim, and al-Durr al-Masun by
+        al-Samin al-Halabi, from the same library and dataset. They are shown as published. In the Android app, al-I‘rab
+        al-Muyassar is included and works without a connection; the others are loaded when you open them.
+      </p>
+      <p>
         {QURAN_SOURCES.dataset}{" "}
         <a className="underline underline-offset-2" href="https://github.com/risan/quran-json" rel="noopener">
           github.com/risan/quran-json

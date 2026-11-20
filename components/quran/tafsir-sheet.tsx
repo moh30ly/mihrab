@@ -4,16 +4,16 @@ import { useEffect, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { fetchLibrary } from "@/lib/library"
-import { TAFSIRS, defaultTafsir, entryAt, tafsirById, tafsirChunkPath, type TafsirEntry } from "@/lib/tafsir"
+import { booksOf, defaultIrab, defaultTafsir, entryAt, tafsirById, tafsirChunkPath, type BookKind, type TafsirEntry } from "@/lib/tafsir"
 import { useT } from "@/lib/i18n"
 import { localeInfo } from "@/lib/i18n/locales"
 import { cn } from "@/lib/utils"
 
-const TAFSIR_PREF_KEY = "mihrab:quran:tafsir"
+const PREF_KEYS: Record<BookKind, string> = { tafsir: "mihrab:quran:tafsir", irab: "mihrab:quran:irab" }
 
-function savedTafsir(): string | null {
+function savedBook(kind: BookKind): string | null {
   try {
-    return window.localStorage.getItem(TAFSIR_PREF_KEY)
+    return window.localStorage.getItem(PREF_KEYS[kind])
   } catch {
     return null
   }
@@ -38,7 +38,9 @@ async function loadTafsir(id: string, surah: number, ayah: number): Promise<{ te
   return null
 }
 
+/** Shows a tafsir or an i‘rab (grammatical analysis) of one ayah, with a choice of book. */
 export function TafsirSheet({
+  kind = "tafsir",
   surahId,
   ayahCount,
   ayah,
@@ -46,6 +48,7 @@ export function TafsirSheet({
   onAyahChange,
   onClose,
 }: {
+  kind?: BookKind
   surahId: number
   ayahCount: number
   ayah: number | null
@@ -60,10 +63,13 @@ export function TafsirSheet({
   useEffect(() => {
     // The saved choice lives in localStorage, which only exists after hydration.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setChoice(savedTafsir())
-  }, [])
+    setChoice(savedBook(kind))
+  }, [kind])
 
-  const info = (choice && tafsirById(choice)) || defaultTafsir(locale)
+  const irab = kind === "irab"
+  const books = booksOf(kind)
+  const info = (choice && tafsirById(choice, kind)) || (irab ? defaultIrab() : defaultTafsir(locale))
+  const title = irab ? t("I‘rab") : t("Tafsir")
   const key = `${info.id}/${surahId}/${ayah}`
 
   useEffect(() => {
@@ -86,39 +92,47 @@ export function TafsirSheet({
   const pick = (id: string) => {
     setChoice(id)
     try {
-      window.localStorage.setItem(TAFSIR_PREF_KEY, id)
+      window.localStorage.setItem(PREF_KEYS[kind], id)
     } catch {
       // Storage can be unavailable in private windows; the choice lasts for this visit.
     }
   }
 
   const current = state?.key === key ? state : null
-  const languages = [...new Set(TAFSIRS.map((x) => x.lang))]
+  const languages = [...new Set(books.map((x) => x.lang))]
+  const options = (lang: string) =>
+    books
+      .filter((x) => x.lang === lang)
+      .map((x) => (
+        <option key={x.id} value={x.id}>
+          {x.name}
+        </option>
+      ))
 
   return (
     <Sheet open={ayah !== null} onOpenChange={(open) => (open ? undefined : onClose())}>
       <SheetContent side="bottom" className="mx-auto max-h-[88dvh] w-full max-w-3xl gap-0 rounded-t-[1.5rem] border-gold/50 pb-[env(safe-area-inset-bottom)]">
         <SheetHeader className="border-b border-border pr-12 pl-4">
           <SheetTitle className="font-heading text-xl text-grove">
-            {t("Tafsir")} · {surahId}:{ayah}
+            {title} · {surahId}:{ayah}
           </SheetTitle>
-          <SheetDescription className="sr-only">{t("Commentary on this ayah")}</SheetDescription>
+          <SheetDescription className="sr-only">
+            {irab ? t("Grammatical analysis of this ayah") : t("Commentary on this ayah")}
+          </SheetDescription>
           <div className="mt-2 flex items-center gap-2">
             <select
-              aria-label={t("Tafsir")}
+              aria-label={title}
               value={info.id}
               onChange={(e) => pick(e.target.value)}
               className="h-10 min-w-0 flex-1 rounded-full border border-border bg-card px-3 text-sm text-ink"
             >
-              {languages.map((lang) => (
-                <optgroup key={lang} label={localeInfo(lang).name}>
-                  {TAFSIRS.filter((x) => x.lang === lang).map((x) => (
-                    <option key={x.id} value={x.id}>
-                      {x.name}
-                    </option>
+              {languages.length === 1
+                ? options(languages[0])
+                : languages.map((lang) => (
+                    <optgroup key={lang} label={localeInfo(lang).name}>
+                      {options(lang)}
+                    </optgroup>
                   ))}
-                </optgroup>
-              ))}
             </select>
             <div dir="ltr" className="flex shrink-0 gap-1">
               <button
@@ -144,6 +158,11 @@ export function TafsirSheet({
         </SheetHeader>
 
         <div className="overflow-y-auto px-5 py-4">
+          {irab && locale !== "ar" ? (
+            <p className="mb-3 rounded-xl bg-secondary px-3 py-2 text-sm text-muted-foreground">
+              {t("I‘rab explains the grammar of each Arabic word, so it is written in Arabic.")}
+            </p>
+          ) : null}
           {arabic ? (
             <p lang="ar" dir="rtl" className="quran-text text-[1.6rem] text-ink">
               {arabic}
@@ -152,9 +171,15 @@ export function TafsirSheet({
           {!current || current.status === "loading" ? (
             <p className="py-6 text-muted-foreground">{t("Loading…")}</p>
           ) : current.status === "error" ? (
-            <p className="py-6 text-muted-foreground">{t("The tafsir could not be loaded. Check your connection and try again.")}</p>
+            <p className="py-6 text-muted-foreground">
+              {irab
+                ? t("The i‘rab could not be loaded. Check your connection and try again.")
+                : t("The tafsir could not be loaded. Check your connection and try again.")}
+            </p>
           ) : current.status === "empty" ? (
-            <p className="py-6 text-muted-foreground">{t("This tafsir has no commentary on this ayah.")}</p>
+            <p className="py-6 text-muted-foreground">
+              {irab ? t("This book has no i‘rab of this ayah.") : t("This tafsir has no commentary on this ayah.")}
+            </p>
           ) : (
             <>
               {current.from ? (
@@ -181,7 +206,10 @@ export function TafsirSheet({
             <a className="underline underline-offset-2" href={info.sourceUrl} rel="noopener" target="_blank">
               {info.source}
             </a>
-            . {t("Tafsir explains the meaning; only the Arabic is the Quran.")}
+            .{" "}
+            {irab
+              ? t("I‘rab explains the grammar of the words; only the Arabic is the Quran.")
+              : t("Tafsir explains the meaning; only the Arabic is the Quran.")}
           </p>
         </div>
       </SheetContent>
