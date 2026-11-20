@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { fetchLibrary } from "@/lib/library"
+import { DownloadHint } from "@/components/offline/download-hint"
 import { booksOf, defaultIrab, defaultTafsir, entryAt, tafsirById, tafsirChunkPath, type BookKind, type TafsirEntry } from "@/lib/tafsir"
 import { useT } from "@/lib/i18n"
 import { localeInfo } from "@/lib/i18n/locales"
@@ -171,11 +172,14 @@ export function TafsirSheet({
           {!current || current.status === "loading" ? (
             <p className="py-6 text-muted-foreground">{t("Loading…")}</p>
           ) : current.status === "error" ? (
-            <p className="py-6 text-muted-foreground">
-              {irab
-                ? t("The i‘rab could not be loaded. Check your connection and try again.")
-                : t("The tafsir could not be loaded. Check your connection and try again.")}
-            </p>
+            <div className="py-6 text-muted-foreground">
+              <p>
+                {irab
+                  ? t("The i‘rab could not be loaded. Check your connection and try again.")
+                  : t("The tafsir could not be loaded. Check your connection and try again.")}
+              </p>
+              <DownloadHint />
+            </div>
           ) : current.status === "empty" ? (
             <p className="py-6 text-muted-foreground">
               {irab ? t("This book has no i‘rab of this ayah.") : t("This tafsir has no commentary on this ayah.")}

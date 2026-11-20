@@ -53,10 +53,38 @@ async function pool(items, size, fn) {
   return results
 }
 
+// Every file written, by book ("tafsir/<id>" or "hadith/<id>"), for the
+// download lists that let the Android app keep a book for offline reading.
+const written = new Map()
+
 function write(path, value) {
   const file = join(outDir, path)
   mkdirSync(dirname(file), { recursive: true })
-  writeFileSync(file, JSON.stringify(value))
+  const text = JSON.stringify(value)
+  writeFileSync(file, text)
+  const parts = path.split("/")
+  const book = parts.slice(0, 2).join("/")
+  if (!written.has(book)) written.set(book, { files: [], bytes: 0 })
+  const w = written.get(book)
+  w.files.push(parts.slice(2).join("/"))
+  w.bytes += Buffer.byteLength(text)
+}
+
+/**
+ * Writes <book>/files.json (the book's files, for a download) and adds each
+ * book's size to library/manifest.json, which the downloads page shows.
+ */
+function writeDownloadLists() {
+  const manifestFile = join(outDir, "manifest.json")
+  const manifest = existsSync(manifestFile) ? JSON.parse(readFileSync(manifestFile, "utf8")) : {}
+  for (const [book, w] of written) {
+    w.files.sort()
+    writeFileSync(join(outDir, book, "files.json"), JSON.stringify(w.files))
+    manifest[book] = { files: w.files.length, bytes: w.bytes }
+  }
+  const sorted = Object.fromEntries(Object.keys(manifest).sort().map((k) => [k, manifest[k]]))
+  writeFileSync(manifestFile, JSON.stringify(sorted))
+  for (const [book, w] of written) console.log(`${book}: ${w.files.length} files, ${(w.bytes / 1e6).toFixed(1)} MB`)
 }
 
 const surahs = JSON.parse(readFileSync(join(root, "data", "quran", "surahs.json"), "utf8"))
@@ -218,3 +246,4 @@ async function hadith() {
 const only = process.argv[3]
 if (!only || only === "tafsir") await tafsir()
 if (!only || only === "hadith") await hadith()
+writeDownloadLists()

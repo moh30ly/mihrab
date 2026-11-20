@@ -6,6 +6,7 @@ import { HadithCollectionView } from "@/components/hadith/hadith-collection"
 import { HadithSources } from "@/components/hadith/hadith-sources"
 import { HADITH_COLLECTIONS, collectionById } from "@/lib/hadith"
 import { T } from "@/lib/i18n"
+import { OfflineNotice } from "@/components/offline/offline-notice"
 
 export const dynamicParams = false
 
@@ -34,6 +35,7 @@ export default async function HadithCollectionPage({ params }: PageProps<"/hadit
       <Link href="/hadith/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-grove">
         <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden /> <T k="All collections" />
       </Link>
+      <OfflineNotice className="mt-4" />
       <header className="arch-panel mt-4 px-6 pt-10 pb-7 text-center">
         <h1>
           <span lang="ar" dir="rtl" className="block font-arabic text-4xl leading-snug">

@@ -26,8 +26,8 @@ jobs:
       # GitHub's Ubuntu runners ship the Android SDK (ANDROID_HOME); Gradle fetches any missing platform.
       - run: npm ci
       - run: npm run build
-      # The concise i'rab is bundled so it works without a connection.
-      - run: node scripts/fetch-library.mjs out tafsir irab-muyassar
+      # The concise i‘rab and the Mukhtasar tafsir (all its languages) are bundled so they work without a connection (OFFLINE_BOOKS in lib/library.ts).
+      - run: node scripts/fetch-library.mjs out tafsir irab-muyassar,mukhtasar-ar,mukhtasar-en,mukhtasar-it,mukhtasar-es,mukhtasar-tr,mukhtasar-zh,mukhtasar-ja
       - run: npx cap sync android
       - name: Build debug APK
         working-directory: android

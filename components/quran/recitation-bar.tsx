@@ -1,8 +1,11 @@
 "use client"
 
-import { Loader2, Pause, Play, RotateCcw, SkipBack, SkipForward, X } from "lucide-react"
+import { CircleCheck, Download, Loader2, Pause, Play, RotateCcw, SkipBack, SkipForward, X } from "lucide-react"
+import { DownloadHint } from "@/components/offline/download-hint"
+import { formatBytes, useCanDownload, useOfflineState, useOnline } from "@/components/offline/use-offline"
 import type { Recitation } from "@/components/quran/use-recitation"
-import { AUDIO_SOURCE, PLAY_MODES, RECITERS, type PlayMode, type Reciter } from "@/lib/recitation"
+import { audioPack, audioSize, cancelDownload, downloadSurahAudio } from "@/lib/offline"
+import { AUDIO_SOURCE, PLAY_MODES, RECITERS, reciterById, type PlayMode, type Reciter } from "@/lib/recitation"
 import { useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
@@ -27,6 +30,45 @@ export function ReciterSelect({ value, onChange, className }: { value: string; o
         </option>
       ))}
     </select>
+  )
+}
+
+/** Keeps this surah's recitation on the phone, in the Android app. */
+function SurahDownload({ surahId, reciterId }: { surahId: number; reciterId: string }) {
+  const { t, locale } = useT()
+  const s = useOfflineState()
+  const online = useOnline()
+  const app = useCanDownload()
+  if (!app) return null
+  const reciter = reciterById(reciterId)
+  const path = audioPack(reciter, surahId)
+  const job = s.jobs[path]
+  const cls = "inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-medium"
+  if (s.packs[path] != null) {
+    return (
+      <span className={cn(cls, "text-grove")} title={t("Downloaded")}>
+        <CircleCheck className="size-4" aria-hidden /> {t("Offline")}
+      </span>
+    )
+  }
+  if (job && job.status !== "error") {
+    const pct = job.status === "downloading" && job.total ? Math.floor((job.done / job.total) * 100) : 0
+    return (
+      <button type="button" onClick={() => void cancelDownload(path)} aria-label={t("Stop downloading {name}", { name: t("Surah {n}", { n: surahId }) })} className={cn(cls, "border border-border text-ink")}>
+        <Loader2 className="size-4 animate-spin" aria-hidden /> <span className="tabular-nums">{pct}%</span>
+      </button>
+    )
+  }
+  return (
+    <button
+      type="button"
+      disabled={!online}
+      onClick={() => downloadSurahAudio(reciter, surahId)}
+      aria-label={t("Download this surah’s recitation ({size})", { size: formatBytes(audioSize(reciter, surahId), locale) })}
+      className={cn(cls, "border border-border text-ink hover:bg-secondary disabled:opacity-40")}
+    >
+      <Download className="size-4" aria-hidden /> {formatBytes(audioSize(reciter, surahId), locale)}
+    </button>
   )
 }
 
@@ -93,10 +135,14 @@ export function RecitationBar({ surahId, recitation }: { surahId: number; recita
           </button>
         </div>
         {status === "error" ? (
-          <p className="px-1 pb-1 text-sm text-[#b4472c]">{t("The recitation could not be loaded. Check your internet connection and try again.")}</p>
+          <div className="px-1 pb-1 text-sm text-[#b4472c]">
+            <p>{t("The recitation could not be loaded. Check your internet connection and try again.")}</p>
+            <DownloadHint kind="audio" />
+          </div>
         ) : null}
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <ReciterSelect value={prefs.reciter} onChange={recitation.setReciter} className="max-w-full flex-1 basis-48" />
+          <SurahDownload surahId={surahId} reciterId={prefs.reciter} />
           <select
             aria-label={t("When an ayah ends")}
             value={prefs.mode}

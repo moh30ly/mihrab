@@ -17,7 +17,9 @@ import {
 } from "@/lib/hifz"
 import { canListen, listen, type ListenError, type Listening } from "@/lib/listen"
 import { ReciterSelect } from "@/components/quran/recitation-bar"
-import { ayahAudioUrl, loadRecitationPrefs, playAyahOnce, reciterById, saveRecitationPrefs } from "@/lib/recitation"
+import { ayahSources, offlineSupported } from "@/lib/offline"
+import { SpeechModel } from "@/components/offline/downloads"
+import { loadRecitationPrefs, playAyahOnce, reciterById, saveRecitationPrefs } from "@/lib/recitation"
 import { NoArabicVoiceError, speakArabic, stopSpeaking } from "@/lib/speak"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
@@ -260,16 +262,23 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     if (playing) void stopPlaying()
   }
 
-  /** The reciter's recording of the ayah; the device's voice if it can't be loaded (offline). */
+  /**
+   * The reciter's recording of the ayah: downloaded on the phone, else from EveryAyah;
+   * the device's voice if neither can be played (offline without a download).
+   */
   const recite = async (n: number, text: string, run: number) => {
     const audio = (audioRef.current ??= new Audio())
     const abort = new AbortController()
     abortRef.current = abort
-    try {
-      await playAyahOnce(audio, ayahAudioUrl(reciterById(reciter), surahId, n), abort.signal)
-    } catch {
-      if (run === playRun.current) await speakArabic(text)
+    for (const src of ayahSources(reciterById(reciter), surahId, n)) {
+      try {
+        await playAyahOnce(audio, src, abort.signal)
+        return
+      } catch {
+        if (run !== playRun.current) return
+      }
     }
+    if (run === playRun.current) await speakArabic(text)
   }
 
   const play = async () => {
@@ -641,6 +650,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
                   : listenError.detail ?? t("Listening stopped unexpectedly. Try again.")}
           </p>
         ) : null}
+        {listenError && (listenError.code === "network" || listenError.code === "language") && offlineSupported() ? <SpeechModel /> : null}
         {voiceError ? <p className="text-sm text-[#b4472c]">{t("No Arabic voice is available on this device.")}</p> : null}
 
         {mode === "idle" && prefs.level > 0 ? (

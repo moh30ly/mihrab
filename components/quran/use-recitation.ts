@@ -1,8 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { ayahSources } from "@/lib/offline"
 import {
-  ayahAudioUrl,
   DEFAULT_RECITATION_PREFS,
   loadRecitationPrefs,
   nextAyah,
@@ -39,7 +39,7 @@ export function useRecitation({ surahId, surahName, total }: { surahId: number; 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const warmRef = useRef<HTMLAudioElement | null>(null)
   // Read inside the audio element's callbacks, which outlive a render.
-  const state = useRef({ ayah: null as number | null, prefs: DEFAULT_RECITATION_PREFS })
+  const state = useRef({ ayah: null as number | null, prefs: DEFAULT_RECITATION_PREFS, fallback: [] as string[] })
 
   useEffect(() => {
     const p = loadRecitationPrefs()
@@ -65,7 +65,10 @@ export function useRecitation({ surahId, surahName, total }: { surahId: number; 
       state.current.ayah = n
       setAyah(n)
       setStatus("loading")
-      a.src = ayahAudioUrl(reciter, surahId, n)
+      // A downloaded surah plays from the phone; otherwise, or if that file is gone, from EveryAyah.
+      const [src, ...fallback] = ayahSources(reciter, surahId, n)
+      state.current.fallback = fallback
+      a.src = src
       a.play().catch(() => {
         // A failed load also fires "error", which shows the message.
         if (a.error == null && state.current.ayah === n) setStatus("paused")
@@ -75,7 +78,7 @@ export function useRecitation({ surahId, surahName, total }: { surahId: number; 
       if (after != null && after !== n) {
         warmRef.current ??= new Audio()
         warmRef.current.preload = "auto"
-        warmRef.current.src = ayahAudioUrl(reciter, surahId, after)
+        warmRef.current.src = ayahSources(reciter, surahId, after)[0]
       }
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -134,7 +137,12 @@ export function useRecitation({ surahId, surahName, total }: { surahId: number; 
       else load(after)
     }
     const onError = () => {
-      if (state.current.ayah != null) setStatus("error")
+      if (state.current.ayah == null) return
+      const next = state.current.fallback.shift()
+      if (next) {
+        a.src = next
+        void a.play().catch(() => {})
+      } else setStatus("error")
     }
     a.addEventListener("playing", onPlaying)
     a.addEventListener("waiting", onWaiting)
