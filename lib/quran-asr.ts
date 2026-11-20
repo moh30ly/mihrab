@@ -126,7 +126,11 @@ export function warmQuranAsr() {
 function transcribe(audio: Float32Array): Promise<{ text: string; ms: number }> {
   const id = nextId++
   return new Promise((resolve) => {
-    waiting.set(id, resolve)
+    const seconds = (audio.length / RATE).toFixed(1)
+    waiting.set(id, (r) => {
+      console.info(`[quran-asr] ${seconds} s of audio in ${r.ms} ms: ${r.text}`)
+      resolve(r)
+    })
     worker!.postMessage({ type: "transcribe", id, audio }, [audio.buffer])
   })
 }

@@ -42,6 +42,8 @@ jobs:
           pip install --extra-index-url https://download.pytorch.org/whl/cpu "torch==2.4.1" "optimum[exporters]==1.20.0" "transformers==4.41.2" "onnx==1.16.2" "onnxruntime==1.18.1" "numpy<2"
           python -c "import torch; print('torch', torch.__version__)"
       - run: python scripts/build-asr-model.py quran-asr
+      # The smaller model (about 3 times faster, slightly less accurate), for slower phones.
+      - run: python scripts/build-asr-model.py quran-asr-tiny tarteel-ai/whisper-tiny-ar-quran
       # The ONNX runtime the page runs it with, so the app needs nothing from a CDN.
       - run: npm ci
       # Al-Fatihah 1:2, Al-Ikhlas 112:1 and Al-Baqarah 2:2, as recited by Mishary Alafasy.
@@ -55,6 +57,7 @@ jobs:
             ffmpeg -loglevel error -i clips/$a.mp3 -ac 1 -ar 48000 clips/$a.wav
           done
           node scripts/check-asr-model.mjs quran-asr clips/*.pcm
+          node scripts/check-asr-model.mjs quran-asr-tiny clips/*.pcm
       - run: |
           mkdir -p quran-asr/ort
           cp node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.mjs node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.wasm quran-asr/ort/
@@ -69,6 +72,7 @@ jobs:
         run: |
           mkdir -p assets
           (cd quran-asr && find . -type f | sed 's|^\./||' | while read f; do cp "$f" "../assets/$(echo "$f" | tr '/' '.')"; done)
+          (cd quran-asr-tiny && find . -type f | sed 's|^\./||' | while read f; do cp "$f" "../assets/tiny.$(echo "$f" | tr '/' '.')"; done)
           ls -la assets
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "Quran recitation checker model" --notes "Tarteel's whisper-base-ar-quran (Apache-2.0), exported to ONNX and quantised for Mihrab's offline recitation checker. Built by .github/workflows/asr-model.yml." --latest=false
           gh release upload "$TAG" assets/* --clobber

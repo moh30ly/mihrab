@@ -8,7 +8,7 @@ Transformers.js reads:
         tokenizer.json, tokenizer_config.json, special_tokens_map.json
   <out>/onnx/encoder_model_quantized.onnx, onnx/decoder_model_merged_quantized.onnx
 
-Usage (CI, .github/workflows/asr-model.yml): python scripts/build-asr-model.py <out>
+Usage (CI, .github/workflows/asr-model.yml): python scripts/build-asr-model.py <out> [model]
 """
 import json
 import shutil
@@ -16,7 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-MODEL = "tarteel-ai/whisper-base-ar-quran"
+MODEL = "tarteel-ai/whisper-base-ar-quran"  # or whisper-tiny-ar-quran, as the second argument
 KEEP = [
     "config.json",
     "generation_config.json",
@@ -31,7 +31,9 @@ KEEP = [
 ]
 
 
-def main(out: Path) -> None:
+def main(out: Path, model: str = MODEL) -> None:
+    global MODEL
+    MODEL = model
     work = Path("asr-export")
     if work.exists():
         shutil.rmtree(work)
@@ -94,4 +96,4 @@ def main(out: Path) -> None:
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1] if len(sys.argv) > 1 else "quran-asr"))
+    main(Path(sys.argv[1] if len(sys.argv) > 1 else "quran-asr"), *sys.argv[2:3])
