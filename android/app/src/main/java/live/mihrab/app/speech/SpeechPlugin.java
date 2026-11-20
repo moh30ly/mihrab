@@ -104,6 +104,25 @@ public class SpeechPlugin extends Plugin {
         call.resolve(ret);
     }
 
+    /** Asks for the microphone up front (on opening the memorisation page), so Recite and Record just work. */
+    @PluginMethod
+    public void requestMic(PluginCall call) {
+        if (getPermissionState("microphone") == PermissionState.GRANTED) {
+            JSObject ret = new JSObject();
+            ret.put("granted", true);
+            call.resolve(ret);
+            return;
+        }
+        requestPermissionForAlias("microphone", call, "afterMic");
+    }
+
+    @PermissionCallback
+    private void afterMic(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("granted", getPermissionState("microphone") == PermissionState.GRANTED);
+        call.resolve(ret);
+    }
+
     @PluginMethod
     public void start(PluginCall call) {
         if (!serviceAvailable()) {

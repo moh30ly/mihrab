@@ -16,7 +16,7 @@ import {
   type HideLevel,
   type WordResult,
 } from "@/lib/hifz"
-import { canListen, listen, type ListenError, type Listening, type ListenStatus } from "@/lib/listen"
+import { canListen, ensureMic, listen, type ListenError, type Listening, type ListenStatus } from "@/lib/listen"
 import { ReciterSelect } from "@/components/quran/recitation-bar"
 import { ayahSources, offlineSupported } from "@/lib/offline"
 import { SpeechModel } from "@/components/offline/downloads"
@@ -123,6 +123,8 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     /* eslint-enable react-hooks/set-state-in-effect */
     setReciterState(loadRecitationPrefs().reciter)
     void canListen().then(setListenSupported)
+    // Ask for the microphone when the page opens, so the first Recite doesn't stop for a prompt.
+    if (isNativeSpeech()) void ensureMic()
   }, [surahId, total])
 
   useEffect(() => {
@@ -234,7 +236,11 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     })
   }
 
-  const startListening = () => {
+  const startListening = async () => {
+    if (native && !(await ensureMic())) {
+      setListenError({ code: "permission" })
+      return
+    }
     void stopPlaying()
     resetTry()
     setMode("listening")
@@ -632,7 +638,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
             ) : (
               <button
                 type="button"
-                onClick={startListening}
+                onClick={() => void startListening()}
                 // Recording yourself holds the microphone; stop it first.
                 // On the phone, always try: the app falls back to the system's speak-now screen.
                 disabled={recordingSelf || (listenSupported === false && !native)}

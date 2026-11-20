@@ -11,6 +11,7 @@ import { Capacitor, registerPlugin, type PluginListenerHandle } from "@capacitor
 
 type NativeSpeech = {
   available(): Promise<{ available: boolean; onDevice: boolean; service?: boolean; dialog?: boolean }>
+  requestMic(): Promise<{ granted: boolean }>
   recognizeDialog(options: { lang: string; prompt?: string }): Promise<{ text: string }>
   start(options: { lang: string; preferOffline?: boolean }): Promise<{ engine?: "service" | "on-device" } | void>
   offlineModel(options: { lang: string }): Promise<{ status: OfflineModel }>
@@ -94,6 +95,19 @@ function webRecognitionClass(): (new () => WebRecognition) | null {
   if (typeof window === "undefined") return null
   const w = window as unknown as Record<string, unknown>
   return ((w.SpeechRecognition ?? w.webkitSpeechRecognition) as (new () => WebRecognition) | undefined) ?? null
+}
+
+/**
+ * In the app, asks Android for the microphone (shows the system prompt the first time).
+ * On the web the browser asks by itself when listening or recording starts.
+ */
+export async function ensureMic(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return true
+  try {
+    return (await NativeSpeech.requestMic()).granted
+  } catch {
+    return false
+  }
 }
 
 /** Whether this device can listen at all; false means only typing is offered. */

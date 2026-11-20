@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Circle, Square, Trash2 } from "lucide-react"
+import { ensureMic } from "@/lib/listen"
 import { canRecord, deleteTake, loadTake, saveTake, startRecording, type Recorder } from "@/lib/recordings"
 import { useT } from "@/lib/i18n"
 
@@ -67,6 +68,7 @@ export function RecordTake({
   const start = async () => {
     setError(false)
     try {
+      if (!(await ensureMic())) throw new Error("Microphone permission was denied")
       rec.current = await startRecording()
       setSeconds(0)
       setRecording(true)
