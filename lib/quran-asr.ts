@@ -36,8 +36,22 @@ export function quranAsrSupported(): boolean {
   return offlineSupported() && typeof window !== "undefined" && typeof Worker !== "undefined" && typeof WebAssembly !== "undefined"
 }
 
+// For trying the model in a browser: the folder that holds quran-asr/, e.g. a local server.
+const TEST_BASE_KEY = "mihrab:quran-asr:base"
+
+/** The folder holding quran-asr/, or null when the model isn't available here. */
+function modelBase(): string | null {
+  if (typeof window === "undefined") return null
+  if (quranAsrSupported() && isDownloaded(QURAN_ASR_PACK)) return localUrl("models/")
+  try {
+    return window.localStorage.getItem(TEST_BASE_KEY)
+  } catch {
+    return null
+  }
+}
+
 export function quranAsrReady(): boolean {
-  return quranAsrSupported() && isDownloaded(QURAN_ASR_PACK)
+  return typeof Worker !== "undefined" && modelBase() != null
 }
 
 export function downloadQuranAsr() {
@@ -71,7 +85,7 @@ export function quranAsrFailed() {
 
 function getWorker(): Promise<void> {
   if (ready) return ready
-  const base = localUrl("models/")
+  const base = modelBase()
   if (!base) return Promise.reject(new Error("The recitation model is not downloaded"))
   // The worker (lib/asr-worker.ts, bundled with Transformers.js) comes with the model, so
   // the app itself carries none of it.

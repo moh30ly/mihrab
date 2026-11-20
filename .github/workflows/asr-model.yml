@@ -15,6 +15,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: asr-model
+  cancel-in-progress: true
+
 env:
   TAG: quran-asr-v1
 
@@ -45,6 +49,7 @@ jobs:
           for a in 001002 112001 002002; do
             curl -sSfL -o clips/$a.mp3 https://everyayah.com/data/Alafasy_128kbps/$a.mp3
             ffmpeg -loglevel error -i clips/$a.mp3 -ac 1 -ar 16000 -f f32le clips/$a.pcm
+            ffmpeg -loglevel error -i clips/$a.mp3 -ac 1 -ar 48000 clips/$a.wav
           done
           node scripts/check-asr-model.mjs quran-asr clips/*.pcm
       - run: |
@@ -68,3 +73,8 @@ jobs:
         with:
           name: quran-asr
           path: quran-asr
+      # The recitations it was checked on, for trying the app's listening end to end.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quran-asr-clips
+          path: clips/*.wav
