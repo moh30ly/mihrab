@@ -37,7 +37,9 @@ jobs:
       - name: Install exporters
         run: |
           # One install, so nothing upgrades torch past the version Optimum's exporter supports.
-          pip install --extra-index-url https://download.pytorch.org/whl/cpu "torch==2.4.1" "optimum[exporters]==1.23.3" "transformers==4.46.3" "onnx==1.17.0" "onnxruntime==1.20.1"
+          # Transformers before 4.42: later Whisper decoders take a cache_position input that
+          # Transformers.js doesn't give.
+          pip install --extra-index-url https://download.pytorch.org/whl/cpu "torch==2.4.1" "optimum[exporters]==1.20.0" "transformers==4.41.2" "onnx==1.16.2" "onnxruntime==1.18.1" "numpy<2"
           python -c "import torch; print('torch', torch.__version__)"
       - run: python scripts/build-asr-model.py quran-asr
       # The ONNX runtime the page runs it with, so the app needs nothing from a CDN.
