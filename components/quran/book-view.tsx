@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { BookOpenText, ChevronLeft, ChevronRight, Languages, X } from "lucide-react"
-import { LAST_READ_KEY, surahById } from "@/lib/quran-index"
+import { BookOpenText, Bookmark, ChevronLeft, ChevronRight, Languages, NotebookPen, X } from "lucide-react"
+import { surahById } from "@/lib/quran-index"
+import { saveLastRead } from "@/lib/quran-notes"
 import { useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
@@ -22,14 +23,6 @@ function arabicNumber(n: number) {
   return n.toLocaleString("ar-EG", { useGrouping: false })
 }
 
-function save(key: string, value: unknown) {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value))
-  } catch {
-    // Storage can be unavailable in private windows.
-  }
-}
-
 /**
  * Reads a surah like a printed mushaf: the text flows into pages that turn right to left.
  * The pages are CSS columns as wide as the frame; turning a page slides the next column in.
@@ -42,8 +35,13 @@ export function BookView({
   showTranslation,
   layoutKey,
   focusAyah,
+  leftOff,
+  tracking,
+  onRead,
+  notedAyahs,
   onTafsir,
   onIrab,
+  onNote,
 }: {
   surahId: number
   surahName: string
@@ -54,8 +52,16 @@ export function BookView({
   layoutKey: string
   /** An ayah opened elsewhere (the tafsir sheet's next and previous); its page is shown. */
   focusAyah: number | null
+  /** The ayah the reader stopped at last time, tagged with a bookmark. */
+  leftOff: number | null
+  /** Whether turning to a page saves it as the place to continue from. */
+  tracking: boolean
+  /** Called when the reader turns a page themselves. */
+  onRead: () => void
+  notedAyahs: Set<number>
   onTafsir: (ayah: number) => void
   onIrab: (ayah: number) => void
+  onNote: (ayah: number) => void
 }) {
   const { t } = useT()
   const router = useRouter()
@@ -159,9 +165,9 @@ export function BookView({
 
   // Remember the ayah this page starts with, for resizing and for "continue reading".
   useEffect(() => {
-    if (width <= 0) return
-    save(LAST_READ_KEY, { surah: surahId, ayah: firstAyahOn(page) })
-  }, [page, width, count, firstAyahOn, surahId])
+    if (width <= 0 || !tracking) return
+    saveLastRead(surahId, firstAyahOn(page))
+  }, [page, width, count, firstAyahOn, surahId, tracking])
 
   useEffect(() => {
     if (focusAyah == null || width <= 0) return
@@ -182,6 +188,7 @@ export function BookView({
   const turn = useCallback(
     (dir: 1 | -1) => {
       const next = page + dir
+      onRead()
       if (next >= count) {
         if (nextSurah) router.push(`/quran/${nextSurah.id}/`)
         return
@@ -194,7 +201,7 @@ export function BookView({
       setSelected(null)
       setPage(next)
     },
-    [page, count, nextSurah, prevSurah, router, firstAyahOn],
+    [page, count, nextSurah, prevSurah, router, firstAyahOn, onRead],
   )
 
   useEffect(() => {
@@ -296,12 +303,14 @@ export function BookView({
               {showTranslation ? (
                 verses.map((v) => (
                   <div key={v.number} data-ayah={v.number} className={cn("book-ayah", selected === v.number && "is-selected")}>
+                    {leftOff === v.number ? <LeftOffMark label={t("You left off here")} block /> : null}
                     <p lang="ar" className="quran-text text-ink">
                       {v.arabic}
                       <span className="ayah-mark text-brass" aria-label={t("Ayah {n}", { n: v.number })}>
                         {"۝"}
                         {arabicNumber(v.number)}
                       </span>
+                      {notedAyahs.has(v.number) ? <NoteMark label={t("Your note")} /> : null}
                     </p>
                     <p
                       lang={v.translation.lang}
@@ -322,11 +331,13 @@ export function BookView({
                 <p lang="ar" className="quran-text book-flow text-ink">
                   {verses.map((v) => (
                     <span key={v.number} data-ayah={v.number} className={cn("book-ayah", selected === v.number && "is-selected")}>
+                      {leftOff === v.number ? <LeftOffMark label={t("You left off here")} /> : null}
                       {v.arabic}
                       <span className="ayah-mark text-brass" aria-label={t("Ayah {n}", { n: v.number })}>
                         {"۝"}
                         {arabicNumber(v.number)}
-                      </span>{" "}
+                      </span>
+                      {notedAyahs.has(v.number) ? <NoteMark label={t("Your note")} /> : null}{" "}
                     </span>
                   ))}
                 </p>
@@ -362,6 +373,19 @@ export function BookView({
             >
               <Languages className="size-4" aria-hidden />
               {t("I‘rab")}
+            </button>
+            <button
+              type="button"
+              onClick={() => onNote(selected)}
+              aria-label={
+                notedAyahs.has(selected)
+                  ? t("Edit note on ayah {n}", { n: `${surahId}:${selected}` })
+                  : t("Add a note to ayah {n}", { n: `${surahId}:${selected}` })
+              }
+              className="inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm text-brass hover:bg-secondary"
+            >
+              <NotebookPen className="size-4" aria-hidden />
+              {t("Note")}
             </button>
             <button
               type="button"
@@ -401,7 +425,30 @@ export function BookView({
           <ChevronLeft className="size-5" aria-hidden />
         </button>
       </div>
-      <p className="mt-2 text-center text-xs text-muted-foreground">{t("Swipe or use the arrows to turn the page. Tap an ayah for its tafsir and i‘rab.")}</p>
+      <p className="mt-2 text-center text-xs text-muted-foreground">{t("Swipe or use the arrows to turn the page. Tap an ayah for its tafsir, i‘rab or your note.")}</p>
     </div>
+  )
+}
+
+function LeftOffMark({ label, block = false }: { label: string; block?: boolean }) {
+  return (
+    <span
+      dir="auto"
+      className={cn(
+        "items-center gap-1 rounded-full border border-gold/60 bg-gold/15 px-2 py-0.5 align-middle font-sans text-xs font-medium text-brass",
+        block ? "mb-1 inline-flex" : "me-1 inline-flex",
+      )}
+    >
+      <Bookmark className="size-3.5 fill-gold/50" aria-hidden />
+      {label}
+    </span>
+  )
+}
+
+function NoteMark({ label }: { label: string }) {
+  return (
+    <span role="img" aria-label={label} className="ms-1 inline-flex align-middle text-brass">
+      <NotebookPen className="size-4" aria-hidden />
+    </span>
   )
 }

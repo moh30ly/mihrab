@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, NotebookPen } from "lucide-react"
 import { QuranSources } from "@/components/quran/quran-sources"
 import { SurahReader } from "@/components/quran/surah-reader"
 import { loadSurahVerses } from "@/lib/quran"
@@ -39,9 +39,14 @@ export default async function SurahPage({ params }: PageProps<"/quran/[surah]">)
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 pt-6 pb-12 sm:px-6">
-      <Link href="/quran/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-grove">
-        <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden /> <T k="All surahs" />
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link href="/quran/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-grove">
+          <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden /> <T k="All surahs" />
+        </Link>
+        <Link href="/quran/notes/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-grove">
+          <NotebookPen className="size-4" aria-hidden /> <T k="My notes" />
+        </Link>
+      </div>
 
       <header className="arch-panel mt-4 px-6 pt-10 pb-7 text-center">
         <p className="text-xs tracking-wide text-brass-bright uppercase">
