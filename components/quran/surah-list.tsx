@@ -1,27 +1,14 @@
 "use client"
 
-import { useMemo, useState, useSyncExternalStore } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import { StarBadge } from "@/components/ornament"
-import { Search } from "lucide-react"
+import { NotebookPen, Search } from "lucide-react"
+import { ContinueReading } from "@/components/quran/continue-reading"
 import { Input } from "@/components/ui/input"
-import { LAST_READ_KEY, type SurahInfo } from "@/lib/quran-index"
+import { type SurahInfo } from "@/lib/quran-index"
+import { useNotes } from "@/lib/quran-notes"
 import { useT } from "@/lib/i18n"
-
-type LastRead = { surah: number; ayah: number }
-
-function readLastRead(): string | null {
-  try {
-    return window.localStorage.getItem(LAST_READ_KEY)
-  } catch {
-    return null
-  }
-}
-
-function subscribe(callback: () => void) {
-  window.addEventListener("storage", callback)
-  return () => window.removeEventListener("storage", callback)
-}
 
 function normalize(value: string) {
   return value
@@ -33,16 +20,7 @@ function normalize(value: string) {
 export function SurahList({ surahs }: { surahs: SurahInfo[] }) {
   const { t } = useT()
   const [query, setQuery] = useState("")
-  const rawLast = useSyncExternalStore(subscribe, readLastRead, () => null)
-  const last = useMemo<LastRead | null>(() => {
-    if (!rawLast) return null
-    try {
-      const v = JSON.parse(rawLast) as LastRead
-      return v.surah >= 1 && v.surah <= 114 ? v : null
-    } catch {
-      return null
-    }
-  }, [rawLast])
+  const noteCount = Object.keys(useNotes()).length
 
   const filtered = useMemo(() => {
     const q = normalize(query.trim())
@@ -56,26 +34,19 @@ export function SurahList({ surahs }: { surahs: SurahInfo[] }) {
     )
   }, [query, surahs])
 
-  const lastSurah = last ? surahs[last.surah - 1] : null
-
   return (
     <div className="mt-6">
-      {lastSurah && last ? (
-        <Link
-          href={`/quran/${lastSurah.id}/#ayah-${last.ayah}`}
-          className="arch-panel mb-6 flex items-center justify-between gap-4 px-6 py-5 !rounded-[1.5rem]"
-        >
-          <span>
-            <span className="block text-xs tracking-wide text-brass-bright uppercase">{t("Continue reading")}</span>
-            <span className="font-heading text-2xl">
-              {t("{surah}, ayah {n}", { surah: lastSurah.transliteration, n: last.ayah })}
-            </span>
-          </span>
-          <span lang="ar" dir="rtl" className="font-quran text-3xl">
-            {lastSurah.name}
-          </span>
-        </Link>
-      ) : null}
+      <ContinueReading className="mb-4" />
+      <Link
+        href="/quran/notes/"
+        className="andalus-card mb-6 flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent"
+      >
+        <NotebookPen className="size-5 shrink-0 text-brass" aria-hidden />
+        <span className="flex-1 font-medium text-ink">{t("My notes")}</span>
+        <span className="text-sm text-muted-foreground tabular-nums">
+          {noteCount === 0 ? t("No notes yet") : noteCount === 1 ? t("1 note") : t("{n} notes", { n: noteCount })}
+        </span>
+      </Link>
 
       <label className="relative block">
         <span className="sr-only">{t("Search surahs")}</span>

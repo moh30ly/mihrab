@@ -41,6 +41,7 @@ import { isInsideReminderWindow, reminderStorageKey } from "@/lib/reminders"
 import { duhaWindow, extraEventsForDay, zakatEvent, type ExtraEvent } from "@/lib/extra-reminders"
 import { ExtraRemindersPanel } from "@/components/extra-reminders-panel"
 import { GoodDeedCard } from "@/components/good-deed-card"
+import { ContinueReading } from "@/components/quran/continue-reading"
 import {
   commitPlace,
   commitSettings,
@@ -312,7 +313,10 @@ export function MihrabApp() {
         {!clientReady || now == null ? (
           <div className="alfiz h-96 animate-pulse" />
         ) : !place ? (
-          <Welcome locating={locating} message={geoMessage} onLocate={() => void locate()} onSearch={() => setCityOpen(true)} />
+          <>
+            <Welcome locating={locating} message={geoMessage} onLocate={() => void locate()} onSearch={() => setCityOpen(true)} />
+            <ContinueReading className="mt-4" />
+          </>
         ) : !times ? (
           <section className="andalus-card p-6">
             <h2 className="font-display text-3xl text-grove">{t("These coordinates need another rule")}</h2>
@@ -368,6 +372,8 @@ export function MihrabApp() {
             </ArchFrame>
 
             <QiblaTeaser bearing={bearing} distanceLabel={distance} />
+
+            <ContinueReading className="lg:col-span-2" />
 
             <GoodDeedCard className="lg:col-span-2" />
 

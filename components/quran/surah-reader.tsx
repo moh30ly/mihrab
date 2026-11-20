@@ -1,12 +1,14 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { BookOpen, BookOpenText, Languages, ScrollText } from "lucide-react"
+import { BookOpen, BookOpenText, Bookmark, Languages, NotebookPen, ScrollText } from "lucide-react"
 import { BookView, type BookVerse } from "@/components/quran/book-view"
+import { NoteSheet } from "@/components/quran/note-sheet"
 import { TafsirSheet } from "@/components/quran/tafsir-sheet"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { LAST_READ_KEY, QURAN_PREFS_KEY } from "@/lib/quran-index"
+import { QURAN_PREFS_KEY } from "@/lib/quran-index"
+import { noteId, readLastRead, saveLastRead, useNotes } from "@/lib/quran-notes"
 import { TRANSLATIONS, translationByCode } from "@/lib/translations"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
@@ -62,13 +64,42 @@ export function SurahReader({
   const [failed, setFailed] = useState<string | null>(null)
   const [tafsirAyah, setTafsirAyah] = useState<number | null>(null)
   const [irabAyah, setIrabAyah] = useState<number | null>(null)
+  const [noteAyah, setNoteAyah] = useState<number | null>(null)
+  /** Where the reader stopped last time in this surah, marked with a tag while they read. */
+  const [leftOff, setLeftOff] = useState<{ ayah: number; offer: boolean } | null>(null)
+  /** Off while a saved place further on is shown, so just opening the surah does not overwrite it. */
+  const [tracking, setTracking] = useState(false)
+  const notes = useNotes()
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Preferences live in localStorage, which only exists after hydration.
+    // Preferences and the saved place live in localStorage, which only exists after hydration.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPrefs(loadPrefs())
-  }, [])
+    const last = readLastRead()
+    const linked = /^#ayah-\d+$/.test(window.location.hash)
+    const here = last && last.surah === surahId && last.ayah > 1 ? last.ayah : null
+    setLeftOff(here ? { ayah: here, offer: !linked } : null)
+    setTracking(!here || linked)
+  }, [surahId])
+
+  // Reading on (scrolling, a key, a touch) starts saving the place again.
+  useEffect(() => {
+    if (tracking) return
+    const start = () => setTracking(true)
+    const events = ["wheel", "touchmove", "keydown"] as const
+    events.forEach((e) => window.addEventListener(e, start, { passive: true, once: true }))
+    return () => events.forEach((e) => window.removeEventListener(e, start))
+  }, [tracking])
+
+  const resume = () => {
+    if (!leftOff) return
+    setLeftOff({ ayah: leftOff.ayah, offer: false })
+    setTracking(true)
+    if (window.location.hash === `#ayah-${leftOff.ayah}`) window.dispatchEvent(new HashChangeEvent("hashchange"))
+    else window.location.hash = `#ayah-${leftOff.ayah}`
+    if (prefs.mode === "scroll") document.getElementById(`ayah-${leftOff.ayah}`)?.scrollIntoView({ block: "start" })
+  }
 
   const key = `${prefs.lang}/${surahId}`
   useEffect(() => {
@@ -98,7 +129,7 @@ export function SurahReader({
   useEffect(() => {
     const root = ref.current
     // The book view keeps its own place, page by page.
-    if (!root || prefs.mode !== "scroll") return
+    if (!root || prefs.mode !== "scroll" || !tracking) return
     const items = Array.from(root.querySelectorAll<HTMLElement>("[data-ayah]"))
     const visible = new Set<number>()
     const observer = new IntersectionObserver(
@@ -108,13 +139,13 @@ export function SurahReader({
           if (e.isIntersecting) visible.add(n)
           else visible.delete(n)
         }
-        if (visible.size > 0) save(LAST_READ_KEY, { surah: surahId, ayah: Math.min(...visible) })
+        if (visible.size > 0) saveLastRead(surahId, Math.min(...visible))
       },
       { rootMargin: "-80px 0px -40% 0px" },
     )
     items.forEach((el) => observer.observe(el))
     return () => observer.disconnect()
-  }, [surahId, prefs.mode])
+  }, [surahId, prefs.mode, tracking])
 
   const info = translationByCode(prefs.lang) ?? TRANSLATIONS[0]
   const texts = prefs.lang === "en" ? null : loaded?.key === key ? loaded.texts : null
@@ -133,6 +164,8 @@ export function SurahReader({
         : translated
   }
   const book = prefs.mode === "book"
+  const noteOf = (n: number) => notes[noteId(surahId, n)]
+  const notedAyahs = new Set(verses.filter((v) => noteOf(v.number)).map((v) => v.number))
   const bookVerses: BookVerse[] = book
     ? verses.map((v, i) => ({
         number: v.number,
@@ -147,6 +180,7 @@ export function SurahReader({
     : []
   const setMode = (mode: Mode) => {
     if (mode === prefs.mode) return
+    setTracking(true)
     update({ ...prefs, mode })
     // Bring the book to the top, so the whole page fits on screen.
     if (mode === "book") setTimeout(() => ref.current?.querySelector(".book-frame")?.scrollIntoView({ block: "start", behavior: "smooth" }), 50)
@@ -226,6 +260,30 @@ export function SurahReader({
         </p>
       ) : null}
 
+      {leftOff?.offer ? (
+        <div role="status" className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[1.25rem] border border-gold/60 bg-gold/10 px-4 py-2.5">
+          <Bookmark className="size-5 shrink-0 fill-gold/40 text-brass" aria-hidden />
+          <p className="min-w-[11rem] flex-1 text-sm text-ink">{t("You left off at ayah {n}.", { n: leftOff.ayah })}</p>
+          <button
+            type="button"
+            onClick={resume}
+            className="inline-flex h-9 items-center rounded-full bg-grove px-4 text-sm font-medium text-[#f6f1e6]"
+          >
+            {t("Continue reading")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setLeftOff({ ayah: leftOff.ayah, offer: false })
+              setTracking(true)
+            }}
+            className="inline-flex h-9 items-center rounded-full px-3 text-sm text-muted-foreground hover:bg-secondary"
+          >
+            {t("Start from the beginning")}
+          </button>
+        </div>
+      ) : null}
+
       {book ? (
         <BookView
           surahId={surahId}
@@ -234,9 +292,14 @@ export function SurahReader({
           bismillah={bismillah}
           showTranslation={prefs.translation}
           layoutKey={`${prefs.size}/${prefs.translation}/${texts ? key : "en"}`}
-          focusAyah={tafsirAyah ?? irabAyah}
+          focusAyah={tafsirAyah ?? irabAyah ?? noteAyah}
+          leftOff={leftOff?.ayah ?? null}
+          tracking={tracking}
+          onRead={() => setTracking(true)}
+          notedAyahs={notedAyahs}
           onTafsir={setTafsirAyah}
           onIrab={setIrabAyah}
+          onNote={setNoteAyah}
         />
       ) : null}
       {!book && bismillah ? (
@@ -246,8 +309,15 @@ export function SurahReader({
       ) : null}
       <ol className={cn("divide-y divide-border", book && "hidden")}>
         {verses.map((v, i) => {
+          const note = noteOf(v.number)
           return (
-            <li key={v.number} id={`ayah-${v.number}`} data-ayah={v.number} className="scroll-mt-28 py-5">
+            <li key={v.number} id={`ayah-${v.number}`} data-ayah={v.number} className="scroll-mt-44 py-5">
+              {leftOff?.ayah === v.number ? (
+                <p className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-gold/60 bg-gold/15 px-3 py-1 text-xs font-medium text-brass">
+                  <Bookmark className="size-3.5 fill-gold/50" aria-hidden />
+                  {t("You left off here")}
+                </p>
+              ) : null}
               <p lang="ar" dir="rtl" className="quran-text text-ink">
                 {v.arabic}
                 <span className="ayah-mark text-brass" aria-label={t("Ayah {n}", { n: v.number })}>
@@ -287,7 +357,31 @@ export function SurahReader({
                   <Languages className="size-4" aria-hidden />
                   {t("I‘rab")}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setNoteAyah(v.number)}
+                  aria-label={
+                    note
+                      ? t("Edit note on ayah {n}", { n: `${surahId}:${v.number}` })
+                      : t("Add a note to ayah {n}", { n: `${surahId}:${v.number}` })
+                  }
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full px-2 text-sm text-brass hover:bg-secondary"
+                >
+                  <NotebookPen className="size-4" aria-hidden />
+                  {note ? t("Edit note") : t("Note")}
+                </button>
               </div>
+              {note ? (
+                <button
+                  type="button"
+                  onClick={() => setNoteAyah(v.number)}
+                  dir="auto"
+                  className="mt-2 block w-full rounded-2xl border border-gold/40 bg-gold/10 px-4 py-2.5 text-start text-sm leading-6 whitespace-pre-line text-ink"
+                >
+                  <span className="sr-only">{t("Your note")}: </span>
+                  {note.text}
+                </button>
+              ) : null}
             </li>
           )
         })}
@@ -308,6 +402,12 @@ export function SurahReader({
         arabic={irabAyah ? verses[irabAyah - 1]?.arabic ?? null : null}
         onAyahChange={setIrabAyah}
         onClose={() => setIrabAyah(null)}
+      />
+      <NoteSheet
+        surahId={surahId}
+        ayah={noteAyah}
+        arabic={noteAyah ? verses[noteAyah - 1]?.arabic ?? null : null}
+        onClose={() => setNoteAyah(null)}
       />
     </div>
   )
