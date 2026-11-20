@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Check, ChevronLeft, ChevronRight, Eye, Keyboard, Lightbulb, Mic, RotateCcw, Square, Volume2 } from "lucide-react"
+import { RecordTake } from "@/components/hifz/record-take"
 import { readLastSession, saveLastSession, useHifzProgress } from "@/components/hifz/use-hifz"
 import {
   HIDE_LEVELS,
@@ -15,7 +16,7 @@ import {
   type HideLevel,
   type WordResult,
 } from "@/lib/hifz"
-import { canListen, listen, type ListenError, type Listening } from "@/lib/listen"
+import { canListen, listen, type ListenError, type Listening, type ListenStatus } from "@/lib/listen"
 import { ReciterSelect } from "@/components/quran/recitation-bar"
 import { ayahSources, offlineSupported } from "@/lib/offline"
 import { SpeechModel } from "@/components/offline/downloads"
@@ -85,6 +86,8 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     setPeekedThisTryState(v)
   }
   const [listenSupported, setListenSupported] = useState<boolean | null>(null)
+  const [status, setStatus] = useState<ListenStatus>({})
+  const [recordingSelf, setRecordingSelf] = useState(false)
   const native = isNativeSpeech()
   const [listenError, setListenError] = useState<{ code: ListenError; detail?: string } | null>(null)
   const [playing, setPlaying] = useState(false)
@@ -173,6 +176,14 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     () => (mode === "listening" && heard ? compareRecitation(words.map((w) => w.text), heard, { partial: true, openings }) : null),
     [mode, heard, words, openings],
   )
+  // The checker stops by itself once the last word has been said.
+  useEffect(() => {
+    if (!live || !listening.current) return
+    const lastDone = live.words.length > 0 && live.words.every((w) => w.status !== "pending")
+    const last = live.words[live.words.length - 1]
+    if (lastDone && (last.status === "correct" || last.status === "close")) listening.current.stop()
+  }, [live])
+
   const marks: WordResult[] | null = mode === "result" && result ? result.words : live ? live.words : null
 
   const resetTry = () => {
@@ -227,12 +238,14 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     void stopPlaying()
     resetTry()
     setMode("listening")
+    setStatus({})
     let latest = ""
     listening.current = listen({
       onText: (text) => {
         latest = text
         setHeard(text)
       },
+      onStatus: (s) => setStatus((prev) => ({ ...prev, ...s })),
       onEnd: (error, detail) => {
         listening.current = null
         if (error) {
@@ -333,8 +346,9 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
   const wordHidden = (w: Word, i: number) => {
     if (mode === "result") return false
     if (peeked.has(wordId(w))) return false
+    // Words already reached in the recitation show, in green or red; the rest stay hidden.
     const m = marks?.[i]
-    if (m && m.status !== "pending" && m.status !== "missed") return false
+    if (m && m.status !== "pending") return false
     return isHidden(prefs.level, surahId, w.ayah, w.index, w.count)
   }
 
@@ -535,19 +549,41 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
           <p className="mx-auto mt-3 max-w-xl text-center text-sm leading-6 text-[#f6f1e6]/80">{shown[0]?.english}</p>
         ) : null}
         {mode === "listening" ? (
-          <p className="mt-4 text-center text-sm text-[#f6f1e6]/80">
-            <span className="me-2 inline-block size-2.5 animate-pulse rounded-full bg-[#ff6b4a] align-middle" aria-hidden />
-            {heard ? (
-              <>
-                {t("Heard:")}{" "}
-                <span lang="ar" dir="rtl" className="font-arabic">
-                  {heard}
-                </span>
-              </>
+          <div className="mt-4 grid justify-items-center gap-2 text-center text-sm text-[#f6f1e6]/85">
+            {status.engine === "dialog" ? (
+              <p>{t("Recite in the phone’s speak-now window. Your words are checked when it closes.")}</p>
             ) : (
-              t("Listening… recite now.")
+              <>
+                <div className="flex items-center gap-2" aria-hidden>
+                  <span className="inline-block size-2.5 animate-pulse rounded-full bg-[#ff6b4a]" />
+                  <span className="flex h-4 items-end gap-0.5">
+                    {[0, 1, 2, 3, 4, 5, 6].map((i) => {
+                      // Recogniser levels run from about -2 (quiet) to 10 (loud).
+                      const level = Math.max(0, Math.min(1, ((status.level ?? -2) + 2) / 10))
+                      const on = level * 7 > i
+                      return <span key={i} className={cn("w-1 rounded-sm", on ? "bg-[#9fe0c6]" : "bg-[#f6f1e6]/25")} style={{ height: `${30 + i * 10}%` }} />
+                    })}
+                  </span>
+                </div>
+                <p>
+                  {heard ? (
+                    <>
+                      {t("Heard:")}{" "}
+                      <span lang="ar" dir="rtl" className="font-arabic">
+                        {heard}
+                      </span>
+                    </>
+                  ) : status.phase === "speech" ? (
+                    t("Hearing you…")
+                  ) : status.phase === "ready" || status.engine ? (
+                    t("Listening… recite now.")
+                  ) : (
+                    t("Starting the microphone…")
+                  )}
+                </p>
+              </>
             )}
-          </p>
+          </div>
         ) : null}
       </section>
 
@@ -597,8 +633,9 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
               <button
                 type="button"
                 onClick={startListening}
+                // Recording yourself holds the microphone; stop it first.
                 // On the phone, always try: the app falls back to the system's speak-now screen.
-                disabled={listenSupported === false && !native}
+                disabled={recordingSelf || (listenSupported === false && !native)}
                 className="inline-flex h-12 items-center gap-2 rounded-full bg-grove px-6 text-base font-medium text-[#f6f1e6] disabled:opacity-50"
               >
                 <Mic className="size-5" aria-hidden /> {t("Recite")}
@@ -664,6 +701,13 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
           </div>
         )}
 
+        {mode !== "typing" ? (
+          <RecordTake
+            takeKey={prefs.scope === "ayah" ? `${surahId}:${ayah}` : `${surahId}:${range.from}-${range.to}`}
+            disabled={mode === "listening" || playing}
+            onRecording={setRecordingSelf}
+          />
+        ) : null}
         {listenSupported === false && !native ? (
           <p className="text-sm text-muted-foreground">
             {t("This browser can’t listen to recitation. Type the ayah instead, or use Chrome, Edge, Safari or the Android app.")}

@@ -12,7 +12,7 @@ import { Capacitor, registerPlugin, type PluginListenerHandle } from "@capacitor
 type NativeSpeech = {
   available(): Promise<{ available: boolean; onDevice: boolean; service?: boolean; dialog?: boolean }>
   recognizeDialog(options: { lang: string; prompt?: string }): Promise<{ text: string }>
-  start(options: { lang: string; preferOffline?: boolean }): Promise<void>
+  start(options: { lang: string; preferOffline?: boolean }): Promise<{ engine?: "service" | "on-device" } | void>
   offlineModel(options: { lang: string }): Promise<{ status: OfflineModel }>
   downloadModel(options: { lang: string }): Promise<void>
   stop(): Promise<void>
@@ -20,6 +20,8 @@ type NativeSpeech = {
   addListener(event: "partial" | "result", fn: (e: { text: string }) => void): Promise<PluginListenerHandle>
   addListener(event: "error", fn: (e: { code: string; message: string }) => void): Promise<PluginListenerHandle>
   addListener(event: "end", fn: () => void): Promise<PluginListenerHandle>
+  addListener(event: "status", fn: (e: { phase: "ready" | "speech" }) => void): Promise<PluginListenerHandle>
+  addListener(event: "level", fn: (e: { level: number }) => void): Promise<PluginListenerHandle>
 }
 
 const NativeSpeech = registerPlugin<NativeSpeech>("MihrabSpeech")
@@ -56,6 +58,17 @@ export type ListenHandlers = {
   onText: (text: string) => void
   /** Listening has stopped, by stop() or because of an error. */
   onEnd: (error?: ListenError, detail?: string) => void
+  /** What the recogniser is doing, so the page can show that it hears the person. */
+  onStatus?: (status: ListenStatus) => void
+}
+
+export type ListenEngine = "service" | "on-device" | "dialog" | "browser"
+export type ListenStatus = {
+  engine?: ListenEngine
+  /** ready: waiting for speech; speech: hearing a voice; dialog: the phone's speak-now screen is open. */
+  phase?: "ready" | "speech" | "dialog"
+  /** Microphone loudness from the phone's recogniser, roughly -2 (silence) to 10 (loud). */
+  level?: number
 }
 
 export type Listening = { stop: () => void }
@@ -73,6 +86,8 @@ type WebRecognition = {
   onresult: ((e: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null
   onerror: ((e: { error: string; message?: string }) => void) | null
   onend: (() => void) | null
+  onaudiostart?: (() => void) | null
+  onspeechstart?: (() => void) | null
 }
 
 function webRecognitionClass(): (new () => WebRecognition) | null {
@@ -123,6 +138,7 @@ function listenWeb(h: ListenHandlers): Listening {
     rec.interimResults = true
     rec.maxAlternatives = 1
     let session = ""
+    let pending = ""
     rec.onresult = (e) => {
       let finals = ""
       let interim = ""
@@ -132,6 +148,7 @@ function listenWeb(h: ListenHandlers): Listening {
         else interim = join(interim, r[0].transcript)
       }
       session = finals
+      pending = interim
       h.onText(join(committed, join(finals, interim)))
     }
     rec.onerror = (e) => {
@@ -143,7 +160,8 @@ function listenWeb(h: ListenHandlers): Listening {
       }
     }
     rec.onend = () => {
-      committed = join(committed, session)
+      // Words still provisional when listening stopped count too; some browsers never finalise them.
+      committed = join(committed, join(session, pending))
       if (active) {
         try {
           run()
@@ -155,6 +173,8 @@ function listenWeb(h: ListenHandlers): Listening {
       h.onText(committed)
       h.onEnd(failed, detail)
     }
+    rec.onaudiostart = () => h.onStatus?.({ engine: "browser", phase: "ready" })
+    rec.onspeechstart = () => h.onStatus?.({ phase: "speech" })
     rec.start()
   }
 
@@ -206,6 +226,7 @@ function listenNative(h: ListenHandlers): Listening {
     failed = undefined
     detail = undefined
     for (const p of handles) void p.then((x) => x.remove()).catch(() => {})
+    h.onStatus?.({ engine: "dialog", phase: "dialog" })
     NativeSpeech.recognizeDialog({ lang: LANG })
       .then(({ text }) => {
         committed = join(committed, text)
@@ -219,7 +240,11 @@ function listenNative(h: ListenHandlers): Listening {
 
   const begin = () =>
     // Offline, the phone's on-device recogniser is used when it has Arabic.
-    NativeSpeech.start({ lang: LANG, preferOffline: typeof navigator !== "undefined" && !navigator.onLine }).catch((e: { code?: string; message?: string }) => {
+    NativeSpeech.start({ lang: LANG, preferOffline: typeof navigator !== "undefined" && !navigator.onLine })
+      .then((r) => {
+        if (r && r.engine) h.onStatus?.({ engine: r.engine })
+      })
+      .catch((e: { code?: string; message?: string }) => {
       if (e?.code === "unavailable" && !heardAnything) return dialog()
       failed = e?.code === "permission" ? "permission" : "other"
       detail = e?.message
@@ -257,6 +282,8 @@ function listenNative(h: ListenHandlers): Listening {
       detail = message
       active = false
     }),
+    NativeSpeech.addListener("status", ({ phase }) => h.onStatus?.({ phase })),
+    NativeSpeech.addListener("level", ({ level }) => h.onStatus?.({ level })),
     NativeSpeech.addListener("end", () => {
       if (dialogMode) return
       if (wantDialog) return dialog()
