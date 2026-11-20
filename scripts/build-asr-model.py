@@ -71,12 +71,21 @@ def main(out: Path) -> None:
         if (work / f).exists():
             shutil.copy(work / f, out / f)
 
-    # Whisper should transcribe Arabic, never translate.
+    # Transformers.js builds the decoder's start tokens (<|startoftranscript|> <|ar|> <|transcribe|>
+    # <|notimestamps|>) from these fields, which older fine-tuned configs leave out.
+    from transformers import AutoTokenizer
+
+    tok = AutoTokenizer.from_pretrained(str(work))
+    tid = tok.convert_tokens_to_ids
     gen = json.loads((out / "generation_config.json").read_text())
-    gen.setdefault("lang_to_id", {})
-    gen.setdefault("task_to_id", {"transcribe": 50359, "translate": 50358})
     gen["is_multilingual"] = True
+    gen["lang_to_id"] = {**gen.get("lang_to_id", {}), "<|ar|>": tid("<|ar|>")}
+    gen["task_to_id"] = {"transcribe": tid("<|transcribe|>"), "translate": tid("<|translate|>")}
+    gen["no_timestamps_token_id"] = tid("<|notimestamps|>")
+    gen["decoder_start_token_id"] = tid("<|startoftranscript|>")
+    gen.pop("forced_decoder_ids", None)
     (out / "generation_config.json").write_text(json.dumps(gen, indent=2))
+    print(json.dumps(gen, indent=2))
 
     files = sorted(str(p.relative_to(out)) for p in out.rglob("*") if p.is_file())
     sizes = {f: (out / f).stat().st_size for f in files}

@@ -7,10 +7,10 @@ name: Quran recitation model
 on:
   workflow_dispatch:
   pull_request:
-    paths: [scripts/build-asr-model.py, .github/workflows/asr-model.yml]
+    paths: [scripts/build-asr-model.py, scripts/check-asr-model.mjs, .github/workflows/asr-model.yml]
   push:
     branches: [main]
-    paths: [scripts/build-asr-model.py, .github/workflows/asr-model.yml]
+    paths: [scripts/build-asr-model.py, scripts/check-asr-model.mjs, .github/workflows/asr-model.yml]
 
 permissions:
   contents: write
@@ -37,6 +37,15 @@ jobs:
       - run: python scripts/build-asr-model.py quran-asr
       # The ONNX runtime the page runs it with, so the app needs nothing from a CDN.
       - run: npm ci
+      # Al-Fatihah 1:2, Al-Ikhlas 112:1 and Al-Baqarah 2:2, as recited by Mishary Alafasy.
+      - name: Check the model on real recitations
+        run: |
+          mkdir -p clips
+          for a in 001002 112001 002002; do
+            curl -sSfL -o clips/$a.mp3 https://everyayah.com/data/Alafasy_128kbps/$a.mp3
+            ffmpeg -loglevel error -i clips/$a.mp3 -ac 1 -ar 16000 -f f32le clips/$a.pcm
+          done
+          node scripts/check-asr-model.mjs quran-asr clips/*.pcm
       - run: |
           mkdir -p quran-asr/ort
           cp node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.mjs node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.wasm quran-asr/ort/
