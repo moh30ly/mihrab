@@ -20,18 +20,19 @@ import { ReciterSelect } from "@/components/quran/recitation-bar"
 import { ayahSources, offlineSupported } from "@/lib/offline"
 import { SpeechModel } from "@/components/offline/downloads"
 import { loadRecitationPrefs, playAyahOnce, reciterById, saveRecitationPrefs } from "@/lib/recitation"
-import { NoArabicVoiceError, speakArabic, stopSpeaking } from "@/lib/speak"
+import { NoArabicVoiceError, isNativeSpeech, speakArabic, stopSpeaking } from "@/lib/speak"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 
 type Verse = { number: number; arabic: string; english: string }
 type Scope = "ayah" | "range"
 type Mode = "idle" | "listening" | "typing" | "result"
-type Prefs = { level: HideLevel; scope: Scope; repeat: number; meaning: boolean }
+type Prefs = { level: HideLevel; scope: Scope; repeat: number; speed: number; meaning: boolean }
 
 const PREFS_KEY = "mihrab:hifz:prefs"
-const DEFAULT_PREFS: Prefs = { level: 0, scope: "ayah", repeat: 3, meaning: true }
-const REPEATS = [1, 3, 5, 7]
+const DEFAULT_PREFS: Prefs = { level: 0, scope: "ayah", repeat: 3, speed: 1, meaning: true }
+const REPEATS = [1, 3, 5, 7, 10]
+const SPEEDS = [0.75, 1, 1.25, 1.5]
 
 function loadPrefs(): Prefs {
   try {
@@ -40,6 +41,7 @@ function loadPrefs(): Prefs {
       level: typeof v.level === "number" && v.level >= 0 && v.level <= 4 ? (v.level as HideLevel) : 0,
       scope: v.scope === "range" ? "range" : "ayah",
       repeat: REPEATS.includes(v.repeat as number) ? (v.repeat as number) : 3,
+      speed: SPEEDS.includes(v.speed as number) ? (v.speed as number) : 1,
       meaning: v.meaning !== false,
     }
   } catch {
@@ -83,6 +85,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     setPeekedThisTryState(v)
   }
   const [listenSupported, setListenSupported] = useState<boolean | null>(null)
+  const native = isNativeSpeech()
   const [listenError, setListenError] = useState<{ code: ListenError; detail?: string } | null>(null)
   const [playing, setPlaying] = useState(false)
   const [voiceError, setVoiceError] = useState(false)
@@ -134,8 +137,19 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     [],
   )
 
+  // Read by the Listen loop, so changing the repeat count or speed while it plays takes effect.
+  const prefsRef = useRef(prefs)
+  useEffect(() => {
+    prefsRef.current = prefs
+  }, [prefs])
+
   const setPref = (next: Partial<Prefs>) => {
     const p = { ...prefs, ...next }
+    prefsRef.current = p
+    if (next.speed && audioRef.current) {
+      audioRef.current.defaultPlaybackRate = next.speed
+      audioRef.current.playbackRate = next.speed
+    }
     setPrefs(p)
     savePrefs(p)
   }
@@ -272,6 +286,9 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     abortRef.current = abort
     for (const src of ayahSources(reciterById(reciter), surahId, n)) {
       try {
+        // Loading a new source resets the rate to the default one.
+        audio.defaultPlaybackRate = prefsRef.current.speed
+        audio.playbackRate = prefsRef.current.speed
         await playAyahOnce(audio, src, abort.signal)
         return
       } catch {
@@ -287,7 +304,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     setVoiceError(false)
     setPlaying(true)
     try {
-      for (let i = 0; i < prefs.repeat && run === playRun.current; i++) {
+      for (let i = 0; i < prefsRef.current.repeat && run === playRun.current; i++) {
         for (const v of shown) {
           if (run !== playRun.current) break
           await recite(v.number, v.arabic, run)
@@ -580,7 +597,8 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
               <button
                 type="button"
                 onClick={startListening}
-                disabled={listenSupported === false}
+                // On the phone, always try: the app falls back to the system's speak-now screen.
+                disabled={listenSupported === false && !native}
                 className="inline-flex h-12 items-center gap-2 rounded-full bg-grove px-6 text-base font-medium text-[#f6f1e6] disabled:opacity-50"
               >
                 <Mic className="size-5" aria-hidden /> {t("Recite")}
@@ -612,11 +630,23 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
                 aria-label={t("Times to repeat")}
                 value={prefs.repeat}
                 onChange={(e) => setPref({ repeat: Number(e.target.value) })}
-                className="h-12 rounded-e-full border border-border bg-card ps-2 pe-3 text-sm"
+                className="h-12 border border-border bg-card ps-2 pe-1 text-sm"
               >
                 {REPEATS.map((n) => (
                   <option key={n} value={n}>
-                    ×{n}
+                    {t("Repeat ×{n}", { n })}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label={t("Speed")}
+                value={prefs.speed}
+                onChange={(e) => setPref({ speed: Number(e.target.value) })}
+                className="h-12 rounded-e-full border border-border bg-card ps-2 pe-3 text-sm"
+              >
+                {SPEEDS.map((n) => (
+                  <option key={n} value={n}>
+                    {t("Speed {n}×", { n })}
                   </option>
                 ))}
               </select>
@@ -634,12 +664,25 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
           </div>
         )}
 
-        {listenSupported === false ? (
+        {listenSupported === false && !native ? (
           <p className="text-sm text-muted-foreground">
             {t("This browser can’t listen to recitation. Type the ayah instead, or use Chrome, Edge, Safari or the Android app.")}
           </p>
         ) : null}
-        {listenError ? (
+        {native && listenError?.code === "unsupported" ? (
+          <p className="text-sm text-[#b4472c]">
+            {t("This phone has no speech recognition turned on. Install or update the Google app (it provides voice typing), then try again. You can also type the ayah.")}{" "}
+            <a
+              className="underline underline-offset-2"
+              href="https://play.google.com/store/apps/details?id=com.google.android.googlequicksearchbox"
+              target="_blank"
+              rel="noopener"
+            >
+              {t("Get the Google app")}
+            </a>
+          </p>
+        ) : null}
+        {listenError && !(native && listenError.code === "unsupported") ? (
           <p className="text-sm text-[#b4472c]">
             {listenError.code === "permission"
               ? t("Mihrab needs the microphone to hear your recitation. Allow it in your browser or phone settings, or type the ayah instead.")
