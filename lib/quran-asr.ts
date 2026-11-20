@@ -2,7 +2,7 @@
 
 // The offline Quran recitation checker: Tarteel's Whisper model fine-tuned on recitation
 // (Apache-2.0), exported by scripts/build-asr-model.py and published as the assets of the
-// quran-asr-v1 release. In the Android app it is an optional download (about 100 MB) kept
+// quran-asr-v1 release. In the Android app it is an optional download (about 85 MB) kept
 // with the other offline packs, and it then hears recitation without Google or a connection.
 //
 // The microphone is read here, cut into stretches of voice at the reciter's pauses, and each
@@ -14,8 +14,12 @@ import type { ListenHandlers, Listening } from "@/lib/listen"
 export const QURAN_ASR_PACK = "models/quran-asr"
 const RELEASE = "https://github.com/moh30ly/mihrab/releases/download/quran-asr-v1/"
 
-/** The model's files, as scripts/build-asr-model.py and .github/workflows/asr-model.yml write them. */
-const FILES = [
+/**
+ * The model's files, as scripts/build-asr-model.py and .github/workflows/asr-model.yml write
+ * them. The app uses Tarteel's tiny model (release assets "tiny.*"): it transcribed the test
+ * ayahs as well as the base model, at about half the time, which matters on a phone.
+ */
+const MODEL_FILES = [
   "config.json",
   "generation_config.json",
   "preprocessor_config.json",
@@ -24,13 +28,11 @@ const FILES = [
   "special_tokens_map.json",
   "onnx/encoder_model_quantized.onnx",
   "onnx/decoder_model_merged_quantized.onnx",
-  "ort/ort-wasm-simd-threaded.jsep.mjs",
-  "ort/ort-wasm-simd-threaded.jsep.wasm",
-  "worker.js",
 ]
+const RUNTIME_FILES = ["ort/ort-wasm-simd-threaded.jsep.mjs", "ort/ort-wasm-simd-threaded.jsep.wasm", "worker.js"]
 
 /** Approximate download size, in bytes. */
-export const QURAN_ASR_SIZE = 100 * 1024 * 1024
+export const QURAN_ASR_SIZE = 85 * 1024 * 1024
 
 export function quranAsrSupported(): boolean {
   return offlineSupported() && typeof window !== "undefined" && typeof Worker !== "undefined" && typeof WebAssembly !== "undefined"
@@ -55,7 +57,10 @@ export function quranAsrReady(): boolean {
 }
 
 export function downloadQuranAsr() {
-  downloadPack(QURAN_ASR_PACK, async () => FILES.map((f) => ({ url: RELEASE + f.replaceAll("/", "."), file: f })))
+  downloadPack(QURAN_ASR_PACK, async () => [
+    ...MODEL_FILES.map((f) => ({ url: `${RELEASE}tiny.${f.replaceAll("/", ".")}`, file: f })),
+    ...RUNTIME_FILES.map((f) => ({ url: RELEASE + f.replaceAll("/", "."), file: f })),
+  ])
 }
 
 // ---- The worker ----------------------------------------------------------------
