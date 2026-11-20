@@ -45,6 +45,7 @@ jobs:
       # Al-Fatihah 1:2, Al-Ikhlas 112:1 and Al-Baqarah 2:2, as recited by Mishary Alafasy.
       - name: Check the model on real recitations
         run: |
+          command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg)
           mkdir -p clips
           for a in 001002 112001 002002; do
             curl -sSfL -o clips/$a.mp3 https://everyayah.com/data/Alafasy_128kbps/$a.mp3
