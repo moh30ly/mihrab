@@ -150,6 +150,26 @@ function concat(chunks: Float32Array[]): Float32Array {
   return out
 }
 
+/** Whisper hears 16 kHz; some phones run audio at their own rate whatever is asked for. */
+function toRate(frame: Float32Array, from: number): Float32Array {
+  if (from === RATE) return frame
+  const out = new Float32Array(Math.floor((frame.length * RATE) / from))
+  const step = from / RATE
+  for (let i = 0; i < out.length; i++) {
+    // Average the input samples this output sample covers (a simple low-pass before decimating).
+    const a = Math.floor(i * step)
+    const b = Math.min(frame.length, Math.max(a + 1, Math.floor((i + 1) * step)))
+    let sum = 0
+    for (let k = a; k < b; k++) sum += frame[k]
+    out[i] = sum / (b - a)
+  }
+  return out
+}
+
+// The whole recitation is checked again in one go at the end when it fits in one Whisper
+// window: words cut at a pause are heard better with what comes around them.
+const MAX_WHOLE = 28
+
 export function listenQuran(h: ListenHandlers): Listening {
   let stopped = false
   let finished = false
@@ -168,6 +188,9 @@ export function listenQuran(h: ListenHandlers): Listening {
   let busy = false
   let lastInterimLength = 0
   const finals: Float32Array[] = []
+  // Every stretch so far, kept for the check of the whole recitation at the end.
+  const all: Float32Array[] = []
+  let wholeDone = false
 
   const join = (a: string, b: string) => (a && b ? `${a} ${b}` : a || b).trim()
   const show = () => h.onText(join(committed, interim))
@@ -196,7 +219,18 @@ export function listenQuran(h: ListenHandlers): Listening {
       void pump()
       return
     }
-    if (stopped) return finish()
+    if (stopped) {
+      const seconds = all.reduce((n, c) => n + c.length, 0) / RATE + all.length * 0.3
+      if (!wholeDone && all.length > 1 && seconds <= MAX_WHOLE) {
+        wholeDone = true
+        busy = true
+        const gap = new Float32Array(Math.round(RATE * 0.3))
+        const { text } = await transcribe(concat(all.flatMap((c) => [c, gap])))
+        busy = false
+        if (text) committed = text
+      }
+      return finish()
+    }
     const length = stretch.reduce((n, c) => n + c.length, 0)
     if (voiced && length - lastInterimLength >= RATE * 0.6) {
       busy = true
@@ -218,7 +252,10 @@ export function listenQuran(h: ListenHandlers): Listening {
     voiced = false
     quiet = 0
     lastInterimLength = 0
-    if (audio.length >= RATE * MIN_STRETCH) finals.push(audio)
+    if (audio.length >= RATE * MIN_STRETCH) {
+      all.push(audio.slice())
+      finals.push(audio)
+    }
     else interim = ""
     void pump()
   }
@@ -257,7 +294,8 @@ export function listenQuran(h: ListenHandlers): Listening {
       h.onStatus?.({ engine: "quran" })
       const model = getWorker()
       stream = await navigator.mediaDevices.getUserMedia({
-        audio: { channelCount: 1, echoCancellation: false, noiseSuppression: true, autoGainControl: true },
+        // Phones' noise suppression smears the consonants the model listens for.
+        audio: { channelCount: 1, echoCancellation: false, noiseSuppression: false, autoGainControl: true },
       })
       if (finished) {
         stream.getTracks().forEach((t) => t.stop())
@@ -265,11 +303,16 @@ export function listenQuran(h: ListenHandlers): Listening {
       }
       await model
       if (stopped) return finish()
-      ctx = new AudioContext({ sampleRate: RATE })
+      try {
+        ctx = new AudioContext({ sampleRate: RATE })
+      } catch {
+        ctx = new AudioContext()
+      }
       const source = ctx.createMediaStreamSource(stream)
-      node = ctx.createScriptProcessor(FRAME, 1, 1)
+      const rate = ctx.sampleRate
+      node = ctx.createScriptProcessor(rate === RATE ? FRAME : 4096, 1, 1)
       node.onaudioprocess = (e) => {
-        if (!stopped) onFrame(new Float32Array(e.inputBuffer.getChannelData(0)))
+        if (!stopped) onFrame(toRate(new Float32Array(e.inputBuffer.getChannelData(0)), rate))
       }
       source.connect(node)
       // Some browsers only run the processor while it is connected to the output; it writes silence.
