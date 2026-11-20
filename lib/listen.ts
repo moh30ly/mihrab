@@ -8,7 +8,7 @@
 // Recognisers stop at a pause, and reciters pause between ayahs, so listening restarts
 // by itself until stop() is called, and the pieces heard are joined together.
 import { Capacitor, registerPlugin, type PluginListenerHandle } from "@capacitor/core"
-import { listenQuran, quranAsrFailed, quranAsrReady } from "@/lib/quran-asr"
+import { listenQuran, probeQuranAsr, quranAsrFailed, quranAsrReady } from "@/lib/quran-asr"
 
 type NativeSpeech = {
   available(): Promise<{ available: boolean; onDevice: boolean; service?: boolean; dialog?: boolean }>
@@ -114,7 +114,7 @@ export async function ensureMic(): Promise<boolean> {
 
 /** Whether this device can listen at all; false means only typing is offered. */
 export async function canListen(): Promise<boolean> {
-  if (quranAsrReady()) return true
+  if ((await probeQuranAsr()) && !quranAsrFailed()) return true
   if (Capacitor.isNativePlatform()) {
     try {
       return (await NativeSpeech.available()).available

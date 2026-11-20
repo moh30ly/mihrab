@@ -43,6 +43,8 @@ jobs:
       - run: npm run build
       # The concise i‘rab and the Mukhtasar tafsir (all its languages) are bundled so they work without a connection (OFFLINE_BOOKS in lib/library.ts).
       - run: node scripts/fetch-library.mjs out tafsir irab-muyassar,mukhtasar-ar,mukhtasar-en,mukhtasar-it,mukhtasar-es,mukhtasar-tr,mukhtasar-zh,mukhtasar-ja
+      # The offline Quran recitation checker (lib/quran-asr.ts), about 85 MB, so Recite works without the Google app.
+      - run: node scripts/fetch-asr-model.mjs out
       - run: npx cap sync android
       - name: Build signed bundle
         working-directory: android

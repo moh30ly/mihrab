@@ -118,7 +118,7 @@ export function isDownloaded(path: string): boolean {
 }
 
 /** The address the web view reads a downloaded file from. */
-export function localUrl(path: string): string | null {
+function localUrl(path: string): string | null {
   const { root } = getOfflineState()
   if (!root) return null
   return Capacitor.convertFileSrc(`file://${root}/${path}`)
@@ -249,11 +249,6 @@ async function pump() {
     running = null
     void pump()
   }
-}
-
-/** Downloads any set of files into one pack. */
-export function downloadPack(path: string, items: () => Promise<Item[]>) {
-  enqueue({ path, items })
 }
 
 export function downloadBook(kind: LibraryKind, id: string) {

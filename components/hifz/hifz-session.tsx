@@ -20,7 +20,7 @@ import { warmQuranAsr } from "@/lib/quran-asr"
 import { canListen, ensureMic, listen, type ListenError, type Listening, type ListenStatus } from "@/lib/listen"
 import { ReciterSelect } from "@/components/quran/recitation-bar"
 import { ayahSources, offlineSupported } from "@/lib/offline"
-import { QuranChecker, SpeechModel } from "@/components/offline/downloads"
+import { SpeechModel } from "@/components/offline/downloads"
 import { loadRecitationPrefs, playAyahOnce, reciterById, saveRecitationPrefs } from "@/lib/recitation"
 import { NoArabicVoiceError, isNativeSpeech, speakArabic, stopSpeaking } from "@/lib/speak"
 import { cn } from "@/lib/utils"
@@ -718,7 +718,6 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
             onRecording={setRecordingSelf}
           />
         ) : null}
-        {mode === "idle" ? <QuranChecker card /> : null}
         {listenSupported === false && !native ? (
           <p className="text-sm text-muted-foreground">
             {t("This browser can’t listen to recitation. Type the ayah instead, or use Chrome, Edge, Safari or the Android app.")}

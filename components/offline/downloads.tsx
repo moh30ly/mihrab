@@ -7,7 +7,7 @@ import { formatBytes, useCanDownload, useOfflineState, useOnline } from "@/compo
 import { HADITH_COLLECTIONS } from "@/lib/hadith"
 import { isBundled } from "@/lib/library"
 import { downloadSpeechModel, offlineSpeechModel, type OfflineModel } from "@/lib/listen"
-import { downloadQuranAsr, QURAN_ASR_PACK, QURAN_ASR_SIZE, quranAsrError, quranAsrSupported } from "@/lib/quran-asr"
+import { probeQuranAsr, quranAsrError } from "@/lib/quran-asr"
 import {
   audioPack,
   audioSize,
@@ -243,35 +243,23 @@ function Recitations() {
 }
 
 /** Whether the phone can check a recitation without a connection, with a button to download Arabic. */
-/**
- * Mihrab's own recitation checker (lib/quran-asr.ts): with it, Recite works without the
- * Google app and without a connection.
- */
-export function QuranChecker({ card = false }: { card?: boolean }) {
+/** Mihrab's own recitation checker (lib/quran-asr.ts), which comes with the app. */
+export function QuranChecker() {
   const { t } = useT()
-  const s = useOfflineState()
-  const [supported, setSupported] = useState(false)
+  const [included, setIncluded] = useState(false)
   useEffect(() => {
-    // Needs the app's file storage, which doesn't exist while pages are prerendered.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSupported(quranAsrSupported())
+    void probeQuranAsr().then(setIncluded)
   }, [])
-  if (!supported) return null
-  // On the memorization page, only offer it until it is downloaded.
-  if (card && s.packs[QURAN_ASR_PACK] != null) return null
-  const error = s.packs[QURAN_ASR_PACK] != null ? quranAsrError() : ""
+  if (!included) return null
+  const error = quranAsrError()
   return (
-    <div className={cn(card ? "andalus-card px-4 py-2" : "mt-3")}>
-      <ul>
-        <PackRow
-          path={QURAN_ASR_PACK}
-          title={t("Quran recitation checker")}
-          subtitle={t("Hears your recitation on the phone, without Google or a connection")}
-          size={QURAN_ASR_SIZE}
-          onDownload={downloadQuranAsr}
-        />
-      </ul>
-      {error ? <p className="pb-2 text-xs text-[#b4472c]">{t("It could not start on this phone, so the phone’s recogniser is used instead.")} ({error})</p> : null}
+    <div className="mt-3 flex items-start gap-3">
+      <CircleCheck className="mt-0.5 size-4 shrink-0 text-grove" aria-hidden />
+      <div className="min-w-0 flex-1 text-sm leading-6">
+        <p className="font-medium text-ink">{t("Quran recitation checker")}</p>
+        <p className="text-muted-foreground">{t("Hears your recitation on the phone, without Google or a connection")}</p>
+        {error ? <p className="text-xs text-[#b4472c]">{t("It could not start on this phone, so the phone’s recogniser is used instead.")} ({error})</p> : null}
+      </div>
     </div>
   )
 }

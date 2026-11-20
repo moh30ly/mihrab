@@ -1,50 +1,39 @@
 "use client"
 
 // The offline Quran recitation checker: Tarteel's Whisper model fine-tuned on recitation
-// (Apache-2.0), exported by scripts/build-asr-model.py and published as the assets of the
-// quran-asr-v1 release. In the Android app it is an optional download (about 85 MB) kept
-// with the other offline packs, and it then hears recitation without Google or a connection.
+// (Apache-2.0, whisper-tiny-ar-quran), exported by scripts/build-asr-model.py and published
+// as the assets of the quran-asr-v1 release. The Android build copies it into the app
+// (scripts/fetch-asr-model.mjs, about 85 MB), so the app hears recitation without the
+// Google app or a connection.
 //
 // The microphone is read here, cut into stretches of voice at the reciter's pauses, and each
-// stretch is transcribed in a worker (lib/asr-worker.ts, downloaded with the model). While a stretch is still going it is
-// transcribed again whenever the worker is free, so the words light up as they are recited.
-import { downloadPack, isDownloaded, localUrl, offlineSupported } from "@/lib/offline"
+// stretch is transcribed in a worker (lib/asr-worker.ts, shipped with the model). While a
+// stretch is still going it is transcribed again whenever the worker is free, so the words
+// light up as they are recited.
+import { Capacitor } from "@capacitor/core"
 import type { ListenHandlers, Listening } from "@/lib/listen"
 
-export const QURAN_ASR_PACK = "models/quran-asr"
-const RELEASE = "https://github.com/moh30ly/mihrab/releases/download/quran-asr-v1/"
-
-/**
- * The model's files, as scripts/build-asr-model.py and .github/workflows/asr-model.yml write
- * them. The app uses Tarteel's tiny model (release assets "tiny.*"): it transcribed the test
- * ayahs as well as the base model, at about half the time, which matters on a phone.
- */
-const MODEL_FILES = [
-  "config.json",
-  "generation_config.json",
-  "preprocessor_config.json",
-  "tokenizer.json",
-  "tokenizer_config.json",
-  "special_tokens_map.json",
-  "onnx/encoder_model_quantized.onnx",
-  "onnx/decoder_model_merged_quantized.onnx",
-]
-const RUNTIME_FILES = ["ort/ort-wasm-simd-threaded.jsep.mjs", "ort/ort-wasm-simd-threaded.jsep.wasm", "worker.js"]
-
-/** Approximate download size, in bytes. */
-export const QURAN_ASR_SIZE = 85 * 1024 * 1024
-
 export function quranAsrSupported(): boolean {
-  return offlineSupported() && typeof window !== "undefined" && typeof Worker !== "undefined" && typeof WebAssembly !== "undefined"
+  return typeof window !== "undefined" && typeof Worker !== "undefined" && typeof WebAssembly !== "undefined"
 }
 
 // For trying the model in a browser: the folder that holds quran-asr/, e.g. a local server.
 const TEST_BASE_KEY = "mihrab:quran-asr:base"
 
-/** The folder holding quran-asr/, or null when the model isn't available here. */
-function modelBase(): string | null {
-  if (typeof window === "undefined") return null
-  if (quranAsrSupported() && isDownloaded(QURAN_ASR_PACK)) return localUrl("models/")
+let bundled = false
+let probing: Promise<boolean> | null = null
+
+/** Finds out whether this app carries the model; the website doesn't. */
+export function probeQuranAsr(): Promise<boolean> {
+  if (!quranAsrSupported()) return Promise.resolve(false)
+  probing ??= (Capacitor.isNativePlatform()
+    ? fetch("/models/quran-asr/config.json", { cache: "no-store" }).then((r) => r.ok, () => false)
+    : Promise.resolve(false)
+  ).then((ok) => (bundled = ok) || testBase() != null)
+  return probing
+}
+
+function testBase(): string | null {
   try {
     return window.localStorage.getItem(TEST_BASE_KEY)
   } catch {
@@ -52,15 +41,16 @@ function modelBase(): string | null {
   }
 }
 
-export function quranAsrReady(): boolean {
-  return typeof Worker !== "undefined" && modelBase() != null
+/** The folder holding quran-asr/, or null when the model isn't available here. */
+function modelBase(): string | null {
+  if (!quranAsrSupported()) return null
+  if (bundled) return `${window.location.origin}/models/`
+  return testBase()
 }
 
-export function downloadQuranAsr() {
-  downloadPack(QURAN_ASR_PACK, async () => [
-    ...MODEL_FILES.map((f) => ({ url: `${RELEASE}tiny.${f.replaceAll("/", ".")}`, file: f })),
-    ...RUNTIME_FILES.map((f) => ({ url: RELEASE + f.replaceAll("/", "."), file: f })),
-  ])
+/** Whether Recite listens with the model (known once probeQuranAsr has finished). */
+export function quranAsrReady(): boolean {
+  return modelBase() != null
 }
 
 // ---- The worker ----------------------------------------------------------------
@@ -91,7 +81,7 @@ export function quranAsrFailed() {
 function getWorker(): Promise<void> {
   if (ready) return ready
   const base = modelBase()
-  if (!base) return Promise.reject(new Error("The recitation model is not downloaded"))
+  if (!base) return Promise.reject(new Error("The recitation model is not in this app"))
   // The worker (lib/asr-worker.ts, bundled with Transformers.js) comes with the model, so
   // the app itself carries none of it.
   worker = new Worker(`${base}quran-asr/worker.js`, { type: "module" })
@@ -125,7 +115,9 @@ function getWorker(): Promise<void> {
 
 /** Loads the model ahead of time, so the first Recite doesn't wait for it. */
 export function warmQuranAsr() {
-  if (quranAsrReady()) void getWorker().catch(() => {})
+  void probeQuranAsr().then((ok) => {
+    if (ok) void getWorker().catch(() => {})
+  })
 }
 
 function transcribe(audio: Float32Array): Promise<{ text: string; ms: number }> {
