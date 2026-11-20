@@ -731,5 +731,9 @@
   "{occasion}. Open Athkar to read it.": "{occasion}。打开“记念词”阅读。",
   "{surah}, ayah {n}": "{surah}，第 {n} 节",
   "{surah}, ayahs {from}–{to}": "{surah}，第 {from}–{to} 节",
-  "‘A’ishah said the Prophet ﷺ would be busy serving his family until the time for prayer came.": "阿伊莎说：先知ﷺ在家里帮助家人做事，直到礼拜时间到来。"
+  "‘A’ishah said the Prophet ﷺ would be busy serving his family until the time for prayer came.": "阿伊莎说：先知ﷺ在家里帮助家人做事，直到礼拜时间到来。",
+  "Quran recitation checker": "古兰经诵读检查器",
+  "Hears your recitation on the phone, without Google or a connection": "在手机上聆听你的诵读，无需 Google 或网络",
+  "Loading the Quran recitation checker…": "正在加载诵读检查器…",
+  "It could not start on this phone, so the phone’s recogniser is used instead.": "无法在此手机上启动，因此改用手机自带的语音识别。"
 }

@@ -7,10 +7,10 @@ name: Quran recitation model
 on:
   workflow_dispatch:
   pull_request:
-    paths: [scripts/build-asr-model.py, scripts/check-asr-model.mjs, .github/workflows/asr-model.yml]
+    paths: [lib/asr-worker.ts, scripts/build-asr-model.py, scripts/check-asr-model.mjs, .github/workflows/asr-model.yml]
   push:
     branches: [main]
-    paths: [scripts/build-asr-model.py, scripts/check-asr-model.mjs, .github/workflows/asr-model.yml]
+    paths: [lib/asr-worker.ts, scripts/build-asr-model.py, scripts/check-asr-model.mjs, .github/workflows/asr-model.yml]
 
 permissions:
   contents: write
@@ -49,7 +49,9 @@ jobs:
       - run: |
           mkdir -p quran-asr/ort
           cp node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.mjs node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.wasm quran-asr/ort/
-          node -e "const fs=require('fs');const p='quran-asr/files.json';const s=JSON.parse(fs.readFileSync(p));for(const f of ['ort/ort-wasm-simd-threaded.jsep.mjs','ort/ort-wasm-simd-threaded.jsep.wasm'])s[f]=fs.statSync('quran-asr/'+f).size;fs.writeFileSync(p,JSON.stringify(s,null,2))"
+          # The worker the app runs the model in (lib/asr-worker.ts), with Transformers.js inside.
+          npx esbuild lib/asr-worker.ts --bundle --format=esm --platform=browser --target=es2022 --minify --outfile=quran-asr/worker.js
+          node -e "const fs=require('fs');const p='quran-asr/files.json';const s=JSON.parse(fs.readFileSync(p));for(const f of ['ort/ort-wasm-simd-threaded.jsep.mjs','ort/ort-wasm-simd-threaded.jsep.wasm','worker.js'])s[f]=fs.statSync('quran-asr/'+f).size;fs.writeFileSync(p,JSON.stringify(s,null,2))"
           cat quran-asr/files.json
       # Release assets are flat, so "onnx/encoder_model_quantized.onnx" becomes "onnx.encoder_model_quantized.onnx".
       - name: Publish release assets

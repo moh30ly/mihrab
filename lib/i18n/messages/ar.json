@@ -731,5 +731,9 @@
   "{occasion}. Open Athkar to read it.": "{occasion}. افتح الأذكار لقراءته.",
   "{surah}, ayah {n}": "{surah}، الآية {n}",
   "{surah}, ayahs {from}–{to}": "{surah}، الآيات {from}–{to}",
-  "‘A’ishah said the Prophet ﷺ would be busy serving his family until the time for prayer came.": "قالت عائشة: كان النبي ﷺ يكون في مهنة أهله، فإذا حضرت الصلاة خرج إلى الصلاة."
+  "‘A’ishah said the Prophet ﷺ would be busy serving his family until the time for prayer came.": "قالت عائشة: كان النبي ﷺ يكون في مهنة أهله، فإذا حضرت الصلاة خرج إلى الصلاة.",
+  "Quran recitation checker": "مصحّح التلاوة",
+  "Hears your recitation on the phone, without Google or a connection": "يسمع تلاوتك على الهاتف دون Google ودون اتصال",
+  "Loading the Quran recitation checker…": "جارٍ تحميل مصحّح التلاوة…",
+  "It could not start on this phone, so the phone’s recogniser is used instead.": "تعذّر تشغيله على هذا الهاتف، لذا يُستخدم مُتعرِّف الهاتف بدلًا منه."
 }

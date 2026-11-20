@@ -8,6 +8,7 @@
 // Recognisers stop at a pause, and reciters pause between ayahs, so listening restarts
 // by itself until stop() is called, and the pieces heard are joined together.
 import { Capacitor, registerPlugin, type PluginListenerHandle } from "@capacitor/core"
+import { listenQuran, quranAsrFailed, quranAsrReady } from "@/lib/quran-asr"
 
 type NativeSpeech = {
   available(): Promise<{ available: boolean; onDevice: boolean; service?: boolean; dialog?: boolean }>
@@ -63,7 +64,8 @@ export type ListenHandlers = {
   onStatus?: (status: ListenStatus) => void
 }
 
-export type ListenEngine = "service" | "on-device" | "dialog" | "browser"
+/** quran: Mihrab's own offline recitation model (lib/quran-asr.ts). */
+export type ListenEngine = "quran" | "service" | "on-device" | "dialog" | "browser"
 export type ListenStatus = {
   engine?: ListenEngine
   /** ready: waiting for speech; speech: hearing a voice; dialog: the phone's speak-now screen is open. */
@@ -112,6 +114,7 @@ export async function ensureMic(): Promise<boolean> {
 
 /** Whether this device can listen at all; false means only typing is offered. */
 export async function canListen(): Promise<boolean> {
+  if (quranAsrReady()) return true
   if (Capacitor.isNativePlatform()) {
     try {
       return (await NativeSpeech.available()).available
@@ -327,5 +330,24 @@ function listenNative(h: ListenHandlers): Listening {
 }
 
 export function listen(h: ListenHandlers): Listening {
+  const fallback = () => (Capacitor.isNativePlatform() ? listenNative(h) : listenWeb(h))
+  if (quranAsrReady() && !quranAsrFailed()) {
+    let current: Listening
+    let stopped = false
+    current = listenQuran({
+      ...h,
+      onEnd: (error, detail) => {
+        // The model would not start here: listen with the phone's recogniser after all.
+        if (error === "other" && quranAsrFailed() && !stopped) current = fallback()
+        else h.onEnd(error, detail)
+      },
+    })
+    return {
+      stop: () => {
+        stopped = true
+        current.stop()
+      },
+    }
+  }
   return Capacitor.isNativePlatform() ? listenNative(h) : listenWeb(h)
 }

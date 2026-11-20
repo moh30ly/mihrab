@@ -731,5 +731,9 @@
   "{occasion}. Open Athkar to read it.": "{occasion}。ズィクルを開いて読みましょう。",
   "{surah}, ayah {n}": "{surah} 第{n}節",
   "{surah}, ayahs {from}–{to}": "{surah}、第{from}–{to}節",
-  "‘A’ishah said the Prophet ﷺ would be busy serving his family until the time for prayer came.": "アーイシャは、預言者ﷺは礼拝の時間が来るまで家族の手伝いをしていたと語った。"
+  "‘A’ishah said the Prophet ﷺ would be busy serving his family until the time for prayer came.": "アーイシャは、預言者ﷺは礼拝の時間が来るまで家族の手伝いをしていたと語った。",
+  "Quran recitation checker": "クルアーン読誦チェッカー",
+  "Hears your recitation on the phone, without Google or a connection": "Googleや接続なしで、端末上であなたの読誦を聞き取ります",
+  "Loading the Quran recitation checker…": "読誦チェッカーを読み込み中…",
+  "It could not start on this phone, so the phone’s recogniser is used instead.": "この端末では起動できなかったため、端末の音声認識を使います。"
 }

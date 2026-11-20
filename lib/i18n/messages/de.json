@@ -731,5 +731,9 @@
   "{occasion}. Open Athkar to read it.": "{occasion}. Öffne Adhkar, um es zu lesen.",
   "{surah}, ayah {n}": "{surah}, Vers {n}",
   "{surah}, ayahs {from}–{to}": "{surah}, Verse {from}–{to}",
-  "‘A’ishah said the Prophet ﷺ would be busy serving his family until the time for prayer came.": "‘A’ischa sagte, der Prophet ﷺ war damit beschäftigt, seiner Familie zu dienen, bis die Gebetszeit kam."
+  "‘A’ishah said the Prophet ﷺ would be busy serving his family until the time for prayer came.": "‘A’ischa sagte, der Prophet ﷺ war damit beschäftigt, seiner Familie zu dienen, bis die Gebetszeit kam.",
+  "Quran recitation checker": "Koran-Rezitationsprüfer",
+  "Hears your recitation on the phone, without Google or a connection": "Hört deine Rezitation auf dem Handy, ohne Google und ohne Verbindung",
+  "Loading the Quran recitation checker…": "Der Rezitationsprüfer wird geladen…",
+  "It could not start on this phone, so the phone’s recogniser is used instead.": "Er konnte auf diesem Handy nicht starten, daher wird die Spracherkennung des Handys verwendet."
 }

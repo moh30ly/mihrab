@@ -16,10 +16,11 @@ import {
   type HideLevel,
   type WordResult,
 } from "@/lib/hifz"
+import { warmQuranAsr } from "@/lib/quran-asr"
 import { canListen, ensureMic, listen, type ListenError, type Listening, type ListenStatus } from "@/lib/listen"
 import { ReciterSelect } from "@/components/quran/recitation-bar"
 import { ayahSources, offlineSupported } from "@/lib/offline"
-import { SpeechModel } from "@/components/offline/downloads"
+import { QuranChecker, SpeechModel } from "@/components/offline/downloads"
 import { loadRecitationPrefs, playAyahOnce, reciterById, saveRecitationPrefs } from "@/lib/recitation"
 import { NoArabicVoiceError, isNativeSpeech, speakArabic, stopSpeaking } from "@/lib/speak"
 import { cn } from "@/lib/utils"
@@ -125,6 +126,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     void canListen().then(setListenSupported)
     // Ask for the microphone when the page opens, so the first Recite doesn't stop for a prompt.
     if (isNativeSpeech()) void ensureMic()
+    warmQuranAsr()
   }, [surahId, total])
 
   useEffect(() => {
@@ -581,6 +583,8 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
                     </>
                   ) : status.phase === "speech" ? (
                     t("Hearing you…")
+                  ) : status.engine === "quran" && !status.phase ? (
+                    t("Loading the Quran recitation checker…")
                   ) : status.phase === "ready" || status.engine ? (
                     t("Listening… recite now.")
                   ) : (
@@ -714,6 +718,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
             onRecording={setRecordingSelf}
           />
         ) : null}
+        {mode === "idle" ? <QuranChecker card /> : null}
         {listenSupported === false && !native ? (
           <p className="text-sm text-muted-foreground">
             {t("This browser can’t listen to recitation. Type the ayah instead, or use Chrome, Edge, Safari or the Android app.")}
