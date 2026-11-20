@@ -1,7 +1,7 @@
 "use client"
 
 // The offline Quran recitation checker: Tarteel's Whisper model fine-tuned on recitation
-// (Apache-2.0, whisper-tiny-ar-quran), exported by scripts/build-asr-model.py and published
+// (Apache-2.0, whisper-base-ar-quran), exported by scripts/build-asr-model.py and published
 // as the assets of the quran-asr-v1 release. The Android build copies it into the app
 // (scripts/fetch-asr-model.mjs, about 85 MB), so the app hears recitation without the
 // Google app or a connection.
@@ -120,8 +120,11 @@ export function warmQuranAsr() {
   })
 }
 
-function transcribe(audio: Float32Array): Promise<{ text: string; ms: number }> {
+function transcribe(stretch: Float32Array): Promise<{ text: string; ms: number }> {
   const id = nextId++
+  // A little quiet after the last word, so the model doesn't cut it short.
+  const audio = new Float32Array(stretch.length + Math.round(RATE * 0.3))
+  audio.set(stretch)
   return new Promise((resolve) => {
     const seconds = (audio.length / RATE).toFixed(1)
     waiting.set(id, (r) => {
