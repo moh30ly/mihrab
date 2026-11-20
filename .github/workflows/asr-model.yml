@@ -32,8 +32,9 @@ jobs:
           cache: npm
       - name: Install exporters
         run: |
-          pip install --index-url https://download.pytorch.org/whl/cpu torch==2.4.1
-          pip install "optimum[exporters]==1.23.3" "transformers==4.46.3" "onnx==1.17.0" "onnxruntime==1.20.1"
+          # One install, so nothing upgrades torch past the version Optimum's exporter supports.
+          pip install --extra-index-url https://download.pytorch.org/whl/cpu "torch==2.4.1" "optimum[exporters]==1.23.3" "transformers==4.46.3" "onnx==1.17.0" "onnxruntime==1.20.1"
+          python -c "import torch; print('torch', torch.__version__)"
       - run: python scripts/build-asr-model.py quran-asr
       # The ONNX runtime the page runs it with, so the app needs nothing from a CDN.
       - run: npm ci
