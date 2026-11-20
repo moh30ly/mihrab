@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { BookOpenText, Languages } from "lucide-react"
+import { BookOpen, BookOpenText, Languages, ScrollText } from "lucide-react"
+import { BookView, type BookVerse } from "@/components/quran/book-view"
 import { TafsirSheet } from "@/components/quran/tafsir-sheet"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -11,9 +12,10 @@ import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n"
 
 type Verse = { number: number; arabic: string; english: string }
-type Prefs = { translation: boolean; size: number; lang: string }
+type Mode = "scroll" | "book"
+type Prefs = { translation: boolean; size: number; lang: string; mode: Mode }
 const SIZES = ["S", "M", "L", "XL"] as const
-const DEFAULT_PREFS: Prefs = { translation: true, size: 1, lang: "en" }
+const DEFAULT_PREFS: Prefs = { translation: true, size: 1, lang: "en", mode: "scroll" }
 
 function loadPrefs(): Prefs {
   try {
@@ -24,6 +26,7 @@ function loadPrefs(): Prefs {
       translation: v.translation !== false,
       size: typeof v.size === "number" && v.size >= 0 && v.size < SIZES.length ? v.size : 1,
       lang: typeof v.lang === "string" && translationByCode(v.lang) ? v.lang : "en",
+      mode: v.mode === "book" ? "book" : "scroll",
     }
   } catch {
     return DEFAULT_PREFS
@@ -42,7 +45,17 @@ function arabicNumber(n: number) {
   return n.toLocaleString("ar-EG", { useGrouping: false })
 }
 
-export function SurahReader({ surahId, verses, bismillah }: { surahId: number; verses: Verse[]; bismillah: string | null }) {
+export function SurahReader({
+  surahId,
+  surahName,
+  verses,
+  bismillah,
+}: {
+  surahId: number
+  surahName: string
+  verses: Verse[]
+  bismillah: string | null
+}) {
   const { t } = useT()
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS)
   const [loaded, setLoaded] = useState<{ key: string; texts: (string | null)[] } | null>(null)
@@ -84,7 +97,8 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
 
   useEffect(() => {
     const root = ref.current
-    if (!root) return
+    // The book view keeps its own place, page by page.
+    if (!root || prefs.mode !== "scroll") return
     const items = Array.from(root.querySelectorAll<HTMLElement>("[data-ayah]"))
     const visible = new Set<number>()
     const observer = new IntersectionObserver(
@@ -100,7 +114,7 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
     )
     items.forEach((el) => observer.observe(el))
     return () => observer.disconnect()
-  }, [surahId])
+  }, [surahId, prefs.mode])
 
   const info = translationByCode(prefs.lang) ?? TRANSLATIONS[0]
   const texts = prefs.lang === "en" ? null : loaded?.key === key ? loaded.texts : null
@@ -110,10 +124,37 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
     while (j > 0 && texts && texts[j] === null) j--
     return j + 1
   }
+  const translationOf = (v: Verse, i: number) => {
+    const translated = texts ? texts[i] : undefined
+    return texts === null || translated === undefined
+      ? v.english
+      : translated === null
+        ? `↑ ${surahId}:${sharedFrom(i)}`
+        : translated
+  }
+  const book = prefs.mode === "book"
+  const bookVerses: BookVerse[] = book
+    ? verses.map((v, i) => ({
+        number: v.number,
+        arabic: v.arabic,
+        translation: {
+          text: translationOf(v, i),
+          lang: texts ? info.code : "en",
+          dir: texts ? info.dir : "ltr",
+          arabicFont: Boolean(texts && info.code === "ar"),
+        },
+      }))
+    : []
+  const setMode = (mode: Mode) => {
+    if (mode === prefs.mode) return
+    update({ ...prefs, mode })
+    // Bring the book to the top, so the whole page fits on screen.
+    if (mode === "book") setTimeout(() => ref.current?.querySelector(".book-frame")?.scrollIntoView({ block: "start", behavior: "smooth" }), 50)
+  }
 
   return (
     <div ref={ref} data-size={prefs.size} data-translation={prefs.translation ? "on" : "off"} className="quran-reader mt-6">
-      <div className="sticky top-14 z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-[1.5rem] border border-gold/50 bg-card/95 shadow-sm px-4 py-2 backdrop-blur">
+      <div className={cn("z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-[1.5rem] border border-gold/50 bg-card/95 shadow-sm px-4 py-2 backdrop-blur", !book && "sticky top-14")}>
         <div className="flex items-center gap-2">
           <Switch
             id="show-translation"
@@ -135,6 +176,28 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
               </option>
             ))}
           </select>
+        </div>
+        <div role="group" aria-label={t("Reading mode")} className="flex gap-0.5 rounded-full border border-border p-0.5">
+          {(
+            [
+              ["scroll", ScrollText, t("Scroll")],
+              ["book", BookOpen, t("Book")],
+            ] as const
+          ).map(([mode, Icon, label]) => (
+            <button
+              key={mode}
+              type="button"
+              aria-pressed={prefs.mode === mode}
+              onClick={() => setMode(mode)}
+              className={cn(
+                "inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium",
+                prefs.mode === mode ? "bg-grove text-[#f6f1e6]" : "text-ink hover:bg-secondary",
+              )}
+            >
+              <Icon className="size-4" aria-hidden />
+              {label}
+            </button>
+          ))}
         </div>
         <div role="group" aria-label={t("Arabic text size")} className="flex gap-1">
           {SIZES.map((label, i) => (
@@ -163,14 +226,26 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
         </p>
       ) : null}
 
-      {bismillah ? (
+      {book ? (
+        <BookView
+          surahId={surahId}
+          surahName={surahName}
+          verses={bookVerses}
+          bismillah={bismillah}
+          showTranslation={prefs.translation}
+          layoutKey={`${prefs.size}/${prefs.translation}/${texts ? key : "en"}`}
+          focusAyah={tafsirAyah ?? irabAyah}
+          onTafsir={setTafsirAyah}
+          onIrab={setIrabAyah}
+        />
+      ) : null}
+      {!book && bismillah ? (
         <p lang="ar" dir="rtl" className="quran-text py-6 text-center text-grove">
           {bismillah}
         </p>
       ) : null}
-      <ol className="divide-y divide-border">
+      <ol className={cn("divide-y divide-border", book && "hidden")}>
         {verses.map((v, i) => {
-          const translated = texts ? texts[i] : undefined
           return (
             <li key={v.number} id={`ayah-${v.number}`} data-ayah={v.number} className="scroll-mt-28 py-5">
               <p lang="ar" dir="rtl" className="quran-text text-ink">
@@ -191,11 +266,7 @@ export function SurahReader({ surahId, verses, bismillah }: { surahId: number; v
                 <a href={`#ayah-${v.number}`} className="me-2 font-medium text-brass tabular-nums" dir="ltr">
                   {surahId}:{v.number}
                 </a>
-                {texts === null || translated === undefined
-                  ? v.english
-                  : translated === null
-                    ? `↑ ${surahId}:${sharedFrom(i)}`
-                    : translated}
+                {translationOf(v, i)}
               </p>
               <div className="mt-2 flex flex-wrap gap-1">
                 <button
