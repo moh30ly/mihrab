@@ -1,5 +1,7 @@
 "use client"
 
+import { Capacitor } from "@capacitor/core"
+
 // Sharing recitations to improve Mihrab's checker: strictly opt-in, off by default.
 //
 // When someone turns it on (components/hifz/donate-recordings.tsx) the device makes a random
@@ -9,7 +11,7 @@
 // is sent. "Delete what I've shared" removes every clip of that donor id from the service.
 
 /** The recordings service. Sharing is offered only when this is set. */
-export const DONATE_URL = ""
+export const DONATE_URL = process.env.NEXT_PUBLIC_DONATE_URL ?? "https://mihrab-recordings.moh10ly.workers.dev"
 
 /** Bump when the consent text changes, so people are asked again. */
 export const CONSENT_VERSION = 1
@@ -37,8 +39,10 @@ export type DonateState = {
 const EMPTY: DonateState = { on: false, sent: 0, recitations: 0, asked: false }
 const listeners = new Set<() => void>()
 
+/** Only the Android app records with Mihrab's own checker, so only it offers sharing (or a test build with the URL set). */
 export function donateAvailable(): boolean {
-  return DONATE_URL !== "" && typeof window !== "undefined" && typeof indexedDB !== "undefined"
+  if (DONATE_URL === "" || typeof window === "undefined" || typeof indexedDB === "undefined") return false
+  return Capacitor.isNativePlatform() || process.env.NEXT_PUBLIC_DONATE_URL !== undefined
 }
 
 export function readDonate(): DonateState {
@@ -178,7 +182,7 @@ let flushing = false
 
 /** Sends what's queued, oldest first; stops at the first failure and tries again later. */
 export async function flush(): Promise<void> {
-  if (flushing || !donateAvailable() || !readDonate().on || (typeof navigator !== "undefined" && !navigator.onLine)) return
+  if (flushing || !donateAvailable() || !readDonate().on || (typeof navigator !== "undefined" && navigator.onLine === false)) return
   flushing = true
   try {
     const keys = ((await withStore("readonly", (s) => s.getAllKeys())) ?? []) as IDBValidKey[]
