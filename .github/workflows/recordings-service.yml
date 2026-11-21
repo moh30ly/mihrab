@@ -46,7 +46,8 @@ jobs:
           url=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)
           echo "Service: $url"
           echo "### Recordings service: $url" >> "$GITHUB_STEP_SUMMARY"
-          curl -sS --retry 5 --retry-delay 3 "$url/"
+          # A new workers.dev name can take a few minutes to get its certificate.
+          for i in $(seq 1 30); do curl -sS -m 10 "$url/" && break; sleep 10; done
           # A clip without consent must be refused.
           code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -F 'meta={}' "$url/v1/clips")
           test "$code" = 400
