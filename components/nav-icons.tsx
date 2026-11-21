@@ -90,3 +90,17 @@ export function GivingIcon(props: IconProps) {
     </Svg>
   )
 }
+
+/** Lectures: a minbar, its stair rising to a domed seat, with a play mark. */
+export function MinbarIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M3 21h18" />
+      <path d="M4.5 21v-2.6h3v-2.6h3v-2.6h3V21" />
+      <path d="M13.5 13.2V8.4h5V21" />
+      <path d="M13 8.4a3 3 0 0 1 6 0" />
+      <path d="M16 3.6v1.8" />
+      <path d="M15.2 15.4v3.2l2.6-1.6z" fill="currentColor" strokeWidth={1.1} />
+    </Svg>
+  )
+}

@@ -3,20 +3,21 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Globe, HandHeart } from "lucide-react"
-import { GivingIcon, MihrabIcon, QiblaIcon, QuranIcon, TasbihIcon } from "@/components/nav-icons"
+import { GivingIcon, MihrabIcon, MinbarIcon, QiblaIcon, QuranIcon, TasbihIcon } from "@/components/nav-icons"
 import { useT } from "@/lib/i18n"
 import { LOCALES, type Locale } from "@/lib/i18n/locales"
 import { setLocale } from "@/lib/i18n/store"
 import { PALETTE as P, star8 } from "@/lib/art"
 import { cn } from "@/lib/utils"
 
-const SECTIONS = ["/qibla", "/quran", "/hifz", "/hadith", "/athkar", "/sibha", "/sadaqah"]
+const SECTIONS = ["/qibla", "/quran", "/hifz", "/hadith", "/athkar", "/sibha", "/lectures", "/sadaqah"]
 
 const LINKS = [
   { href: "/", label: "Prayer", icon: MihrabIcon, match: (p: string) => !SECTIONS.some((s) => p.startsWith(s)) },
   { href: "/qibla/", label: "Qibla", icon: QiblaIcon, match: (p: string) => p.startsWith("/qibla") },
   { href: "/quran/", label: "Quran", icon: QuranIcon, match: (p: string) => p.startsWith("/quran") || p.startsWith("/hifz") || p.startsWith("/hadith") },
   { href: "/athkar/", label: "Athkar", icon: TasbihIcon, match: (p: string) => p.startsWith("/athkar") || p.startsWith("/sibha") },
+  { href: "/lectures/", label: "Lectures", icon: MinbarIcon, match: (p: string) => p.startsWith("/lectures") },
   { href: "/sadaqah/", label: "Sadaqah", icon: GivingIcon, match: (p: string) => p.startsWith("/sadaqah") },
 ]
 
@@ -79,7 +80,7 @@ export function SiteNav() {
         className="fixed inset-x-0 bottom-0 z-40 bg-[linear-gradient(180deg,#7a2819,#4a150d)] pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-12px_rgba(63,18,11,0.6)]"
       >
         <div aria-hidden className="frieze-thin absolute inset-x-0 -top-[13px]" />
-        <ul className="mx-auto grid h-[4.25rem] max-w-xl grid-cols-5 px-1">
+        <ul className="mx-auto grid h-[4.25rem] max-w-xl grid-cols-6 px-1">
           {LINKS.map(({ href, label, icon: Icon, match }) => {
             const active = match(pathname)
             return (

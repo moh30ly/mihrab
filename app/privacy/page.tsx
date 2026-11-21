@@ -130,6 +130,15 @@ export default function PrivacyPage() {
             , which, like any web server, sees your IP address and which ayah file is requested. Nothing else is sent, and nothing
             is requested until you press play.
           </p>
+          <p>
+            The Lectures section plays videos from the official YouTube channel of Sheikh Said El Kamali with YouTube’s
+            embedded player, in its privacy-enhanced mode (youtube-nocookie.com). Nothing is loaded from YouTube until you
+            press play. Once you do, YouTube receives your IP address and what you watch, as described in{" "}
+            <a className="underline underline-offset-2" href="https://policies.google.com/privacy" rel="noopener">
+              Google’s privacy policy
+            </a>
+            .
+          </p>
         </section>
 
         <section>
