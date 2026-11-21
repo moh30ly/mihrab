@@ -17,6 +17,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...HISN.map((c) => ({ url: `${SITE_URL}/athkar/hisn/${c.id}/`, lastModified: "2026-11-19" })),
     { url: `${SITE_URL}/sadaqah/`, lastModified: "2026-11-19" },
     { url: `${SITE_URL}/privacy/`, lastModified: "2026-11-19" },
+    { url: `${SITE_URL}/donate/`, lastModified: "2026-11-21" },
+    { url: `${SITE_URL}/about/`, lastModified: "2026-11-21" },
     ...SURAHS.map((s) => ({ url: `${SITE_URL}/quran/${s.id}/`, lastModified: "2026-11-19" })),
     { url: `${SITE_URL}/hifz/`, lastModified: "2026-11-20" },
     ...SURAHS.map((s) => ({ url: `${SITE_URL}/hifz/${s.id}/`, lastModified: "2026-11-20" })),

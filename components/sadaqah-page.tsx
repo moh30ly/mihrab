@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { BellRing } from "lucide-react"
+import { BellRing, HandHeart } from "lucide-react"
 import { Frieze, StarMark } from "@/components/ornament"
 import { GivingIcon } from "@/components/nav-icons"
 import { ZakatCalculator } from "@/components/zakat-calculator"
@@ -38,6 +38,23 @@ export function SadaqahPage({ verse }: { verse: Verse }) {
           </Link>
         </figcaption>
       </figure>
+
+      <section className="andalus-card mt-6 flex items-start gap-4 px-5 py-5">
+        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[#123f3c] text-brass-bright">
+          <HandHeart className="size-6" aria-hidden />
+        </span>
+        <div>
+          <h2 className="font-display text-2xl text-grove">{t("Give to the people of Gaza")}</h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{t("All donations go to Aid Gaza (aidgaza.org).")}</p>
+          <Link
+            href="/donate/"
+            className="mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-grove px-4 text-sm font-medium text-[#fbf1de] hover:brightness-110"
+          >
+            <HandHeart className="size-4" aria-hidden />
+            {t("Donate")}
+          </Link>
+        </div>
+      </section>
 
       <ZakatCalculator />
 
