@@ -51,3 +51,10 @@ jobs:
           # A clip without consent must be refused.
           code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -F 'meta={}' "$url/v1/clips")
           test "$code" = 400
+          # A full round trip with a throwaway donor: one clip in, then all of that donor's clips deleted.
+          donor=$(openssl rand -hex 16); key=$(openssl rand -hex 16)
+          python3 -c "import wave;w=wave.open('t.wav','wb');w.setnchannels(1);w.setsampwidth(2);w.setframerate(16000);w.writeframes(bytes(32000));w.close()"
+          meta="{\"donor\":\"$donor\",\"deleteKey\":\"$key\",\"surah\":1,\"ayahFrom\":1,\"ayahTo\":1,\"score\":1,\"heard\":\"test\",\"statuses\":[\"correct\"],\"consent\":1,\"adult\":true,\"app\":\"ci-check\"}"
+          curl -sS -f -X POST -F "audio=@t.wav;type=audio/wav" --form-string "meta=$meta" "$url/v1/clips"
+          curl -sS -f -X DELETE -H "X-Delete-Key: $key" "$url/v1/donors/$donor" | tee del.json
+          grep -q '"deleted":2' del.json
