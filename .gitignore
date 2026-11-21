@@ -44,3 +44,4 @@ next-env.d.ts
 /public/library/
 /.cache/
 /scripts/asr-train/.cache/
+__pycache__/
