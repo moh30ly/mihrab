@@ -1,0 +1,88 @@
+name: Recitation model training
+
+# Tools for training Mihrab's own Quran recitation model (scripts/asr-train/README.md).
+#
+# everyday: scores the shipped model on learners' recitations (RetaSy, correct and incorrect)
+#           and on professional ones, including whether a changed or skipped word is caught.
+# smoke:    proves the whole training path runs end to end on a CPU: prepare data, a few
+#           training steps, export to ONNX for the app, and score the exported model.
+#           Real training needs a GPU; see the README.
+
+on:
+  workflow_dispatch:
+    inputs:
+      clips:
+        description: Test clips to score per source (0 = all)
+        default: "400"
+  pull_request:
+    paths: [scripts/asr-train/**, scripts/eval-asr-everyday.mts, .github/workflows/asr-train.yml]
+
+concurrency:
+  group: asr-train-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  EXPORT_DEPS: '--extra-index-url https://download.pytorch.org/whl/cpu torch==2.4.1 optimum[exporters]==1.20.0 transformers==4.41.2 accelerate==0.30.1 onnx==1.16.2 onnxruntime==1.18.1 numpy<2 pyarrow huggingface_hub'
+
+jobs:
+  everyday:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: pip install pyarrow huggingface_hub "numpy<2"
+      - run: command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg)
+      - name: Learners (RetaSy) and professional reciters (EveryAyah)
+        run: |
+          python scripts/asr-train/prepare_data.py ds-learners --retasy
+          python scripts/asr-train/prepare_data.py ds-pro --everyayah-split test \
+            --everyayah Alafasy_128kbps:001001-001007,112001-112004,067001-067005 \
+            --everyayah Husary_64kbps:001001-001007,036001-036005,103001-103003 \
+            --everyayah Abdul_Basit_Murattal_64kbps:002001-002005,078001-078005
+          du -sh ds-learners ds-pro
+      - run: |
+          node scripts/fetch-asr-model.mjs m base
+          mv m/models/quran-asr shipped-base
+      - name: Score the shipped model
+        run: |
+          N="${{ github.event.inputs.clips || '400' }}"
+          npx tsx scripts/eval-asr-everyday.mts ds-learners --split test --limit "$N" --json learners.json shipped-base
+          npx tsx scripts/eval-asr-everyday.mts ds-pro --split test --json pro.json shipped-base
+      - uses: actions/upload-artifact@v4
+        with:
+          name: everyday-eval
+          path: "*.json"
+
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: pip install $EXPORT_DEPS
+      - run: command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg)
+      - name: A tiny dataset
+        run: |
+          python scripts/asr-train/prepare_data.py ds --everyayah-split train --everyayah Alafasy_128kbps:001001-001007
+          python scripts/asr-train/prepare_data.py ds --everyayah-split test --everyayah Husary_64kbps:112001-112004
+      - name: A few training steps on the CPU
+        run: python scripts/asr-train/finetune.py --data ds --out run --max-steps 3 --batch 2 --eval-limit 4
+      - name: Export for the app, as the release model is
+        run: python scripts/build-asr-model.py exported run/final
+      - name: Score the exported model
+        run: npx tsx scripts/eval-asr-everyday.mts ds --split all exported
