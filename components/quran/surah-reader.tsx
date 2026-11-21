@@ -334,7 +334,8 @@ export function SurahReader({
           onIrab={setIrabAyah}
           onNote={setNoteAyah}
           recitingAyah={reciting}
-          onListen={recitation.play}
+          recitingNow={recitingNow}
+          onListen={(n) => (reciting === n ? recitation.toggle() : recitation.play(n))}
         />
       ) : null}
       {!book && bismillah ? (
