@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Check, ChevronLeft, ChevronRight, Eye, Keyboard, Lightbulb, Mic, RotateCcw, Square, Volume2 } from "lucide-react"
 import { RecordTake } from "@/components/hifz/record-take"
+import { saveTake } from "@/lib/recordings"
 import { readLastSession, saveLastSession, useHifzProgress } from "@/components/hifz/use-hifz"
 import {
   HIDE_LEVELS,
@@ -238,6 +239,9 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     })
   }
 
+  const takeKey = prefs.scope === "ayah" ? `${surahId}:${ayah}` : `${surahId}:${range.from}-${range.to}`
+  const [takeVersion, setTakeVersion] = useState(0)
+
   const startListening = async () => {
     if (native && !(await ensureMic())) {
       setListenError({ code: "permission" })
@@ -254,6 +258,10 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
         setHeard(text)
       },
       onStatus: (s) => setStatus((prev) => ({ ...prev, ...s })),
+      // Mihrab's own checker keeps what it heard: it becomes this ayah's recording.
+      onAudio: (blob) => {
+        void saveTake(takeKey, blob).then(() => setTakeVersion((v) => v + 1))
+      },
       onEnd: (error, detail) => {
         listening.current = null
         if (error) {
@@ -713,7 +721,8 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
 
         {mode !== "typing" ? (
           <RecordTake
-            takeKey={prefs.scope === "ayah" ? `${surahId}:${ayah}` : `${surahId}:${range.from}-${range.to}`}
+            takeKey={takeKey}
+            version={takeVersion}
             disabled={mode === "listening" || playing}
             onRecording={setRecordingSelf}
           />

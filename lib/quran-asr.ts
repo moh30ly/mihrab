@@ -173,6 +173,32 @@ function toRate(frame: Float32Array, from: number): Float32Array {
 // window: words cut at a pause are heard better with what comes around them.
 const MAX_WHOLE = 28
 
+/** 16-bit mono WAV, which every WebView can play back. */
+function wav(chunks: Float32Array[]): Blob {
+  const samples = chunks.reduce((n, c) => n + c.length, 0)
+  const buf = new ArrayBuffer(44 + samples * 2)
+  const v = new DataView(buf)
+  const text = (at: number, s: string) => [...s].forEach((c, i) => v.setUint8(at + i, c.charCodeAt(0)))
+  text(0, "RIFF")
+  v.setUint32(4, 36 + samples * 2, true)
+  text(8, "WAVE")
+  text(12, "fmt ")
+  v.setUint32(16, 16, true)
+  v.setUint16(20, 1, true)
+  v.setUint16(22, 1, true)
+  v.setUint32(24, RATE, true)
+  v.setUint32(28, RATE * 2, true)
+  v.setUint16(32, 2, true)
+  v.setUint16(34, 16, true)
+  text(36, "data")
+  v.setUint32(40, samples * 2, true)
+  let at = 44
+  for (const c of chunks) {
+    for (let i = 0; i < c.length; i++, at += 2) v.setInt16(at, Math.max(-1, Math.min(1, c[i])) * 0x7fff, true)
+  }
+  return new Blob([buf], { type: "audio/wav" })
+}
+
 export function listenQuran(h: ListenHandlers): Listening {
   let stopped = false
   let finished = false
@@ -193,6 +219,8 @@ export function listenQuran(h: ListenHandlers): Listening {
   const finals: Float32Array[] = []
   // Every stretch so far, kept for the check of the whole recitation at the end.
   const all: Float32Array[] = []
+  // Everything the microphone picked up, pauses included, so the recitation can be replayed.
+  const recording: Float32Array[] = []
   let wholeDone = false
 
   const join = (a: string, b: string) => (a && b ? `${a} ${b}` : a || b).trim()
@@ -204,6 +232,7 @@ export function listenQuran(h: ListenHandlers): Listening {
     node?.disconnect()
     stream?.getTracks().forEach((t) => t.stop())
     void ctx?.close().catch(() => {})
+    if (recording.length && h.onAudio) h.onAudio(wav(recording))
     h.onText(committed)
     h.onEnd(error, detail)
   }
@@ -264,6 +293,7 @@ export function listenQuran(h: ListenHandlers): Listening {
   }
 
   const onFrame = (frame: Float32Array) => {
+    recording.push(frame)
     let sum = 0
     for (let i = 0; i < frame.length; i++) sum += frame[i] * frame[i]
     const rms = Math.sqrt(sum / frame.length)

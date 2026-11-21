@@ -62,6 +62,8 @@ export type ListenHandlers = {
   onEnd: (error?: ListenError, detail?: string) => void
   /** What the recogniser is doing, so the page can show that it hears the person. */
   onStatus?: (status: ListenStatus) => void
+  /** The recitation as heard, when the engine keeps it (Mihrab's own checker), just before onEnd. */
+  onAudio?: (wav: Blob) => void
 }
 
 /** quran: Mihrab's own offline recitation model (lib/quran-asr.ts). */

@@ -9,10 +9,13 @@ import { useT } from "@/lib/i18n"
 /** Record yourself reciting and play it back; the latest take is kept for each ayah or range. */
 export function RecordTake({
   takeKey,
+  version = 0,
   disabled,
   onRecording,
 }: {
   takeKey: string
+  /** Changes when a take was saved elsewhere (Recite keeps what it heard), to load it again. */
+  version?: number
   disabled?: boolean
   onRecording?: (on: boolean) => void
 }) {
@@ -45,7 +48,7 @@ export function RecordTake({
       cancelled = true
       if (made) URL.revokeObjectURL(made)
     }
-  }, [takeKey])
+  }, [takeKey, version])
 
   useEffect(() => {
     if (!recording) return
