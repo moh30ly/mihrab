@@ -1,0 +1,8 @@
+# Same versions as the exporter in .github/workflows/asr-model.yml, so a trained model exports
+# without surprises. On a GPU machine install the CUDA build of torch 2.4.1 instead.
+torch==2.4.1
+transformers==4.41.2
+accelerate==0.30.1
+numpy<2
+pyarrow==17.0.0  # the last release that works with numpy 1.x
+huggingface_hub>=0.23
