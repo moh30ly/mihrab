@@ -1,0 +1,52 @@
+name: Recordings service
+
+# Deploys workers/recordings (where people's opt-in recitations are sent, lib/donate.ts) to
+# Cloudflare Workers, with a private R2 bucket. Needs the repository secrets
+# CLOUDFLARE_API_TOKEN ("Edit Cloudflare Workers" template) and CLOUDFLARE_ACCOUNT_ID.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, claude/project-thread-vy5orn]
+    paths: [workers/recordings/**, .github/workflows/recordings-service.yml]
+
+concurrency:
+  group: recordings-service
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    defaults:
+      run:
+        working-directory: workers/recordings
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Check the secrets are set
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are not set yet; nothing deployed."
+            echo "SKIP=1" >> "$GITHUB_ENV"
+          fi
+      - name: Make sure the bucket exists
+        if: env.SKIP != '1'
+        run: npx --yes wrangler@3.114.0 r2 bucket create mihrab-recordings 2>&1 | tail -3 || true
+      - name: Deploy
+        if: env.SKIP != '1'
+        run: npx --yes wrangler@3.114.0 deploy 2>&1 | tee deploy.log
+      - name: Check it answers
+        if: env.SKIP != '1'
+        run: |
+          url=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)
+          echo "Service: $url"
+          echo "### Recordings service: $url" >> "$GITHUB_STEP_SUMMARY"
+          curl -sS --retry 5 --retry-delay 3 "$url/"
+          # A clip without consent must be refused.
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -F 'meta={}' "$url/v1/clips")
+          test "$code" = 400
