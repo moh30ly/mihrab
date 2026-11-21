@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Amiri, Amiri_Quran, Fraunces, Outfit } from "next/font/google"
+import { SiteFooter } from "@/components/site-footer"
 import { SiteNav } from "@/components/site-nav"
 import { SITE_URL } from "@/lib/site"
 import "./globals.css"
@@ -78,6 +79,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="pb-nav flex min-h-full flex-col">
         <SiteNav />
         {children}
+        <SiteFooter />
       </body>
     </html>
   )
