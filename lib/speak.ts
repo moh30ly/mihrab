@@ -1,9 +1,11 @@
 "use client"
 
-// Reads Arabic aloud with the device's own text-to-speech voice: the browser's
-// speech synthesis on the web, and Android's TTS engine in the app. Nothing is
-// downloaded, so it works offline once the device has an Arabic voice.
+// Reads Arabic aloud. Athkar, duas and sibha phrases that have a human recording
+// (lib/dhikr-audio.ts) play that; anything else uses the device's own text-to-speech
+// voice: the browser's speech synthesis on the web, and Android's TTS engine in the app.
+// Both work offline in the app.
 import { Capacitor } from "@capacitor/core"
+import { dhikrRecording } from "@/lib/dhikr-audio"
 
 /** Thrown when the device has no Arabic voice, so nothing would be heard. */
 export class NoArabicVoiceError extends Error {
@@ -199,13 +201,70 @@ export async function openVoiceInstall() {
   }
 }
 
+// ---- Human recordings ----
+
+let recording: HTMLAudioElement | null = null
+let recordingStopped: (() => void) | null = null
+
+/** Plays a recording to the end. Resolves early when Stop is pressed; rejects if it can't play. */
+function playRecording(src: string): Promise<void> {
+  stopRecording()
+  const audio = new Audio(src)
+  recording = audio
+  return new Promise<void>((resolve, reject) => {
+    const done = () => {
+      if (recording === audio) recording = null
+      recordingStopped = null
+      resolve()
+    }
+    recordingStopped = done
+    audio.onended = done
+    audio.onerror = () => {
+      if (recording === audio) recording = null
+      recordingStopped = null
+      reject(new Error("The recording could not be played"))
+    }
+    audio.play().catch((e: unknown) => {
+      if (recording !== audio) return resolve() // Stopped before it started.
+      recording = null
+      recordingStopped = null
+      reject(e instanceof Error ? e : new Error(String(e)))
+    })
+  })
+}
+
+function stopRecording() {
+  if (recording) {
+    recording.pause()
+    recording.removeAttribute("src")
+    recording = null
+  }
+  recordingStopped?.()
+}
+
+/** Whether this text plays a person's recording rather than the device's voice. */
+export function hasRecording(text: string) {
+  return dhikrRecording(text) !== null
+}
+
 export async function speakArabic(text: string): Promise<void> {
+  const src = dhikrRecording(text)
+  if (src) {
+    await stopVoice()
+    try {
+      return await playRecording(src)
+    } catch (e) {
+      // Autoplay refused by the browser is worth reporting; a missing file falls back to the voice.
+      if (e instanceof Error && e.name === "NotAllowedError") throw e
+    }
+  }
   const clean = speakableArabic(text)
   if (isNative()) await speakNative(clean)
   else await speakWeb(clean)
 }
 
-export async function stopSpeaking() {
+/** Silences the device's voice (not a recording). */
+async function stopVoice() {
   try {
     if (isNative()) {
       nativeRun++
@@ -217,6 +276,11 @@ export async function stopSpeaking() {
   } catch {
     // Nothing was playing.
   }
+}
+
+export async function stopSpeaking() {
+  stopRecording()
+  await stopVoice()
 }
 
 export function isNativeSpeech() {
