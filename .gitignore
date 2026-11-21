@@ -43,3 +43,5 @@ next-env.d.ts
 # tafsir and hadith files written by scripts/fetch-library.mjs
 /public/library/
 /.cache/
+/scripts/asr-train/.cache/
+__pycache__/

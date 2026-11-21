@@ -3,11 +3,11 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "Privacy policy",
   description:
-    "Mihrab has no accounts, no ads and no tracking. Your location is used on your device to work out prayer times and the Qibla, and is never sent to us.",
+    "Mihrab has no accounts, no ads and no tracking. Your location is used on your device to work out prayer times and the Qibla, and is never sent to us. Recitations are shared only if you opt in.",
   alternates: { canonical: "/privacy/" },
 }
 
-const UPDATED = "20 November 2026"
+const UPDATED = "21 November 2026"
 
 export default function PrivacyPage() {
   return (
@@ -19,8 +19,9 @@ export default function PrivacyPage() {
         <section>
           <p>
             This policy covers the Mihrab website at mihrab.live and the Mihrab app for Android (package live.mihrab.app).
-            In short: Mihrab has no accounts, no ads, no analytics and no tracking. We do not collect, store, sell or share
-            any personal data.
+            In short: Mihrab has no accounts, no ads, no analytics and no tracking, and we never sell or share personal
+            data. The one thing we ever receive is recordings of your Quran recitation, and only if you turn on sharing on
+            the memorization page (see below). It is off unless you choose it.
           </p>
         </section>
 
@@ -66,10 +67,48 @@ export default function PrivacyPage() {
           <h2>Microphone (Quran memorization)</h2>
           <p>
             When you tap Recite on the memorization page, Mihrab asks to use the microphone so it can check your recitation.
-            The listening is done by your device’s own speech recognition: Android’s speech service in the app, or your
-            browser’s on the website. Depending on your device and browser, that service may send the audio to its provider
-            (for example Google) to turn it into text. Mihrab itself does not record, store or send any audio; only the
-            resulting score for each ayah is kept on your device. You can always type the ayah instead.
+            In the Android app, Mihrab’s own recitation checker turns your voice into text on your device; nothing is sent
+            anywhere to do that. Where that checker isn’t available, your device’s speech recognition is used instead
+            (Android’s speech service, or your browser’s on the website), and depending on your device that service may send
+            the audio to its provider (for example Google) to turn it into text.
+          </p>
+          <p>
+            Mihrab keeps your latest recording of each ayah on your device so you can listen back, and your score for each
+            ayah. These stay on your device and are deleted if you clear the app’s data or uninstall it. You can always type
+            the ayah instead.
+          </p>
+        </section>
+
+        <section>
+          <h2>Recitations you choose to share (optional)</h2>
+          <p>
+            The checker learned from professional reciters and makes more mistakes with everyday voices. To improve it, you
+            can turn on “Share my recitations to improve the checker” on the memorization page. It is off by default, Mihrab
+            asks you first, and you must confirm that you are 18 or older or that a parent or guardian agrees.
+          </p>
+          <p>When it is on, after each recitation checked by Mihrab’s own checker, the app sends us:</p>
+          <ul>
+            <li>the audio recording of that recitation;</li>
+            <li>which surah and ayahs you recited, what the checker heard, and its score and word-by-word marks;</li>
+            <li>the app version, and a random code made on your device when you turned sharing on, so that you can delete
+              your recordings later.</li>
+          </ul>
+          <p>
+            We do not receive your name, email, account, location or any device identifier. Our server (run on Cloudflare)
+            notes the country a recording came from, to know which accents we have, and does not keep your IP address with
+            it. Recordings are sent encrypted (HTTPS) and stored in private storage on Cloudflare R2 that only the Mihrab
+            developer can read.
+          </p>
+          <p>
+            We use these recordings only to train and test Mihrab’s recitation checker, which then ships inside the app. We
+            never publish, sell or share them, and never use them for advertising, profiling or to identify you. A voice
+            recording can be personal data, so we keep them for at most 3 years and delete them sooner when no longer needed.
+          </p>
+          <p>
+            You can turn sharing off at any time; nothing more is sent after that. “Delete everything I shared” on the
+            memorization page deletes all recordings sent from your device right away. If you have uninstalled the app or
+            lost access to it, contact us and we will help. By turning sharing on you give your consent for this use, and
+            you can withdraw it at any time.
           </p>
         </section>
 
@@ -81,7 +120,7 @@ export default function PrivacyPage() {
             <a className="underline underline-offset-2" href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">
               GitHub’s privacy statement
             </a>
-            . The Android app ships with its content built in and does not send your data to any server.
+            . The Android app ships with its content built in and does not send your data to any server, except the recitations you choose to share.
           </p>
           <p>
             When you press Listen on a surah, the recitation is streamed ayah by ayah from{" "}
@@ -96,7 +135,9 @@ export default function PrivacyPage() {
         <section>
           <h2>Children</h2>
           <p>
-            Mihrab is suitable for all ages and does not knowingly collect information from anyone, including children.
+            Mihrab is suitable for all ages and does not knowingly collect information from children. Sharing recitations
+            asks people to confirm they are 18 or older, or that a parent or guardian agrees. If you believe a child shared
+            recordings without permission, contact us and we will delete them.
           </p>
         </section>
 
