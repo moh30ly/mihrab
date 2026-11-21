@@ -16,6 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/athkar/hisn/`, lastModified: "2026-11-19" },
     ...HISN.map((c) => ({ url: `${SITE_URL}/athkar/hisn/${c.id}/`, lastModified: "2026-11-19" })),
     { url: `${SITE_URL}/sadaqah/`, lastModified: "2026-11-19" },
+    { url: `${SITE_URL}/lectures/`, lastModified: "2026-11-21" },
     { url: `${SITE_URL}/privacy/`, lastModified: "2026-11-19" },
     { url: `${SITE_URL}/donate/`, lastModified: "2026-11-21" },
     { url: `${SITE_URL}/about/`, lastModified: "2026-11-21" },
