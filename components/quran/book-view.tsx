@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { BookOpenText, Bookmark, ChevronLeft, ChevronRight, Languages, NotebookPen, Play, X } from "lucide-react"
+import { BookOpenText, Bookmark, ChevronLeft, ChevronRight, Languages, NotebookPen, Pause, Play, type LucideIcon } from "lucide-react"
 import { surahById } from "@/lib/quran-index"
 import { saveLastRead } from "@/lib/quran-notes"
 import { useT } from "@/lib/i18n"
@@ -43,6 +43,7 @@ export function BookView({
   onIrab,
   onNote,
   recitingAyah = null,
+  recitingNow = false,
   onListen,
 }: {
   surahId: number
@@ -66,6 +67,9 @@ export function BookView({
   onNote: (ayah: number) => void
   /** The ayah being recited (0 is the basmala); its page is shown as the recitation moves on. */
   recitingAyah?: number | null
+  /** Whether that recitation is playing rather than paused. */
+  recitingNow?: boolean
+  /** Plays from an ayah, or pauses and resumes when it is the one being recited. */
   onListen?: (ayah: number) => void
 }) {
   const { t } = useT()
@@ -78,6 +82,8 @@ export function BookView({
   const [drag, setDrag] = useState(0)
   const [selected, setSelected] = useState<number | null>(null)
   const [jump, setJump] = useState(0)
+  /** The first ayah on the page shown, which the actions below the page use until an ayah is tapped. */
+  const [pageAyah, setPageAyah] = useState(verses[0]?.number ?? 1)
   const anchor = useRef<number | "last" | null>(null)
   const pointer = useRef<{ x: number; y: number; id: number; moved: boolean } | null>(null)
   const step = width + GAP
@@ -127,7 +133,11 @@ export function BookView({
         anchor.current = Number(m[1])
         setSelected(Number(m[1]))
       } else if (hash === LAST_PAGE_HASH) anchor.current = "last"
-      else return
+      else {
+        // Opened in book mode: show the whole page with its actions below it, not the surah's title.
+        if (initial) frameRef.current?.closest(".book-frame")?.scrollIntoView({ block: "start" })
+        return
+      }
       if (!initial) setJump((j) => j + 1)
       // Opened at a place in the surah: show the book rather than the surah's title.
       frameRef.current?.closest(".book-frame")?.scrollIntoView({ block: "start" })
@@ -170,8 +180,11 @@ export function BookView({
 
   // Remember the ayah this page starts with, for resizing and for "continue reading".
   useEffect(() => {
-    if (width <= 0 || !tracking) return
-    saveLastRead(surahId, firstAyahOn(page))
+    if (width <= 0) return
+    const first = firstAyahOn(page)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPageAyah(first)
+    if (tracking) saveLastRead(surahId, first)
   }, [page, width, count, firstAyahOn, surahId, tracking])
 
   useEffect(() => {
@@ -273,6 +286,7 @@ export function BookView({
     setSelected((s) => (s === n ? null : n))
   }
 
+  const target = selected ?? pageAyah
   const offset = page * step + drag
   const pageLabel = t("Page {n} of {total}", { n: page + 1, total: count })
 
@@ -363,72 +377,36 @@ export function BookView({
               <span data-end aria-hidden className="block h-px" />
             </div>
           </div>
+          <AyahActions
+            label={t("Ayah {n}", { n: `${surahId}:${target}` })}
+            chosen={selected != null}
+            items={[
+              ...(onListen
+                ? [
+                    {
+                      key: "listen",
+                      Icon: recitingAyah === target ? Pause : Play,
+                      text: recitingAyah === target && recitingNow ? t("Pause") : t("Listen"),
+                      aria: t("Listen to ayah {n}", { n: `${surahId}:${target}` }),
+                      onClick: () => onListen(target),
+                    },
+                  ]
+                : []),
+              { key: "tafsir", Icon: BookOpenText, text: t("Tafsir"), aria: t("Tafsir of ayah {n}", { n: `${surahId}:${target}` }), onClick: () => onTafsir(target) },
+              { key: "irab", Icon: Languages, text: t("I‘rab"), aria: t("I‘rab of ayah {n}", { n: `${surahId}:${target}` }), onClick: () => onIrab(target) },
+              {
+                key: "note",
+                Icon: NotebookPen,
+                text: notedAyahs.has(target) ? t("Edit note") : t("Note"),
+                aria: notedAyahs.has(target)
+                  ? t("Edit note on ayah {n}", { n: `${surahId}:${target}` })
+                  : t("Add a note to ayah {n}", { n: `${surahId}:${target}` }),
+                onClick: () => onNote(target),
+              },
+            ]}
+          />
         </div>
 
-        {selected != null ? (
-          <div
-            dir="ltr"
-            className="absolute inset-x-3 bottom-3 z-10 flex items-center gap-1 rounded-full border border-gold/60 bg-card/95 px-2 py-1 shadow-md backdrop-blur"
-          >
-            <span className="px-2 text-sm font-medium text-brass tabular-nums">
-              {surahId}:{selected}
-            </span>
-            <span className="flex-1" />
-            {onListen ? (
-              <button
-                type="button"
-                onClick={() => {
-                  onListen(selected)
-                  setSelected(null)
-                }}
-                aria-label={t("Listen to ayah {n}", { n: `${surahId}:${selected}` })}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm text-brass hover:bg-secondary"
-              >
-                <Play className="size-4" aria-hidden />
-                <span className="hidden min-[400px]:inline">{t("Listen")}</span>
-              </button>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => onTafsir(selected)}
-              aria-label={t("Tafsir of ayah {n}", { n: `${surahId}:${selected}` })}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm text-brass hover:bg-secondary"
-            >
-              <BookOpenText className="size-4" aria-hidden />
-              {t("Tafsir")}
-            </button>
-            <button
-              type="button"
-              onClick={() => onIrab(selected)}
-              aria-label={t("I‘rab of ayah {n}", { n: `${surahId}:${selected}` })}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm text-brass hover:bg-secondary"
-            >
-              <Languages className="size-4" aria-hidden />
-              {t("I‘rab")}
-            </button>
-            <button
-              type="button"
-              onClick={() => onNote(selected)}
-              aria-label={
-                notedAyahs.has(selected)
-                  ? t("Edit note on ayah {n}", { n: `${surahId}:${selected}` })
-                  : t("Add a note to ayah {n}", { n: `${surahId}:${selected}` })
-              }
-              className="inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm text-brass hover:bg-secondary"
-            >
-              <NotebookPen className="size-4" aria-hidden />
-              {t("Note")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelected(null)}
-              aria-label={t("Close")}
-              className="inline-flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary"
-            >
-              <X className="size-4" aria-hidden />
-            </button>
-          </div>
-        ) : null}
       </div>
 
       {/* Laid out right to left like the book: the next page is on the left. */}
@@ -482,5 +460,32 @@ function NoteMark({ label }: { label: string }) {
     <span role="img" aria-label={label} className="ms-1 inline-flex align-middle text-brass">
       <NotebookPen className="size-4" aria-hidden />
     </span>
+  )
+}
+
+type AyahAction = { key: string; Icon: LucideIcon; text: string; aria: string; onClick: () => void }
+
+/** Listen, tafsir, i‘rab and note for the ayah tapped, or for the first ayah on the page. Always shown, below the page. */
+function AyahActions({ label, chosen, items }: { label: string; chosen: boolean; items: AyahAction[] }) {
+  return (
+    <div className="mt-2 border-t border-gold/40 pt-1.5">
+      <p className={cn("text-center text-xs tabular-nums", chosen ? "font-medium text-brass" : "text-muted-foreground")} dir="auto">
+        {label}
+      </p>
+      <div className="mt-0.5 grid auto-cols-fr grid-flow-col gap-1">
+        {items.map(({ key, Icon, text, aria, onClick }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={onClick}
+            aria-label={aria}
+            className="inline-flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-xs text-brass hover:bg-secondary"
+          >
+            <Icon className="size-5 shrink-0" aria-hidden />
+            <span className="max-w-full truncate">{text}</span>
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }

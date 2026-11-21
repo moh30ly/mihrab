@@ -237,13 +237,13 @@
 
 /* Book reading mode: the surah flows into columns as tall as the frame, one column per page. */
 .book-viewport {
-  height: max(20rem, calc(100dvh - 18.5rem));
+  height: max(18rem, calc(100dvh - 23rem));
   user-select: none;
   -webkit-user-select: none;
 }
 /* Leave room for the recitation player below the page. */
 .quran-reader.has-player .book-viewport {
-  height: max(16rem, calc(100dvh - 26rem));
+  height: max(14rem, calc(100dvh - 30.5rem));
 }
 .book-pages {
   column-fill: auto;
