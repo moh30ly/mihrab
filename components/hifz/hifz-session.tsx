@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Check, ChevronLeft, ChevronRight, Eye, Keyboard, Lightbulb, Mic, RotateCcw, Square, Volume2 } from "lucide-react"
+import { Check, ChevronLeft, ChevronRight, Eye, Keyboard, Lightbulb, Loader2, Mic, RotateCcw, Square, Volume2 } from "lucide-react"
 import { RecordTake } from "@/components/hifz/record-take"
 import { saveTake } from "@/lib/recordings"
 import { readLastSession, saveLastSession, useHifzProgress } from "@/components/hifz/use-hifz"
@@ -186,8 +186,9 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     if (!live || !listening.current) return
     const lastDone = live.words.length > 0 && live.words.every((w) => w.status !== "pending")
     const last = live.words[live.words.length - 1]
-    if (lastDone && (last.status === "correct" || last.status === "close")) listening.current.stop()
-  }, [live])
+    // Stop at the last word when it was right, or once the reciter pauses after reaching it.
+    if (lastDone && (last.status === "correct" || last.status === "close" || status.phase === "ready")) listening.current.stop()
+  }, [live, status.phase])
 
   const marks: WordResult[] | null = mode === "result" && result ? result.words : live ? live.words : null
 
@@ -258,6 +259,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
         setHeard(text)
       },
       onStatus: (s) => setStatus((prev) => ({ ...prev, ...s })),
+      recheck: (text) => compareRecitation(words.map((w) => w.text), text, { openings }).score < 1,
       // Mihrab's own checker keeps what it heard: it becomes this ayah's recording.
       onAudio: (blob) => {
         void saveTake(takeKey, blob).then(() => setTakeVersion((v) => v + 1))
@@ -589,6 +591,8 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
                         {heard}
                       </span>
                     </>
+                  ) : status.phase === "checking" ? (
+                    t("Checking your recitation…")
                   ) : status.phase === "speech" ? (
                     t("Hearing you…")
                   ) : status.engine === "quran" && !status.phase ? (
@@ -640,13 +644,23 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
         ) : (
           <div className="flex flex-wrap items-center gap-2">
             {mode === "listening" ? (
-              <button
-                type="button"
-                onClick={stopListening}
-                className="inline-flex h-12 items-center gap-2 rounded-full bg-[#b4472c] px-6 text-base font-medium text-white"
-              >
-                <Square className="size-4 fill-current" aria-hidden /> {t("Stop and check")}
-              </button>
+              status.phase === "checking" ? (
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex h-12 items-center gap-2 rounded-full bg-[#b4472c]/70 px-6 text-base font-medium text-white"
+                >
+                  <Loader2 className="size-4 animate-spin" aria-hidden /> {t("Checking…")}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={stopListening}
+                  className="inline-flex h-12 items-center gap-2 rounded-full bg-[#b4472c] px-6 text-base font-medium text-white"
+                >
+                  <Square className="size-4 fill-current" aria-hidden /> {t("Stop and check")}
+                </button>
+              )
             ) : (
               <button
                 type="button"

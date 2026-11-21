@@ -64,6 +64,8 @@ export type ListenHandlers = {
   onStatus?: (status: ListenStatus) => void
   /** The recitation as heard, when the engine keeps it (Mihrab's own checker), just before onEnd. */
   onAudio?: (wav: Blob) => void
+  /** Whether the text heard so far is worth checking again as a whole (false: it is already right). */
+  recheck?: (text: string) => boolean
 }
 
 /** quran: Mihrab's own offline recitation model (lib/quran-asr.ts). */
@@ -71,7 +73,7 @@ export type ListenEngine = "quran" | "service" | "on-device" | "dialog" | "brows
 export type ListenStatus = {
   engine?: ListenEngine
   /** ready: waiting for speech; speech: hearing a voice; dialog: the phone's speak-now screen is open. */
-  phase?: "ready" | "speech" | "dialog"
+  phase?: "ready" | "speech" | "dialog" | "checking"
   /** Microphone loudness from the phone's recogniser, roughly -2 (silence) to 10 (loud). */
   level?: number
 }

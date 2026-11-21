@@ -735,5 +735,7 @@
   "Quran recitation checker": "Kur'an tilavet denetleyicisi",
   "Hears your recitation on the phone, without Google or a connection": "Tilavetinizi telefonda, Google ve bağlantı olmadan dinler",
   "Loading the Quran recitation checker…": "Tilavet denetleyicisi yükleniyor…",
-  "It could not start on this phone, so the phone’s recogniser is used instead.": "Bu telefonda başlatılamadı, bu yüzden telefonun tanıyıcısı kullanılıyor."
+  "It could not start on this phone, so the phone’s recogniser is used instead.": "Bu telefonda başlatılamadı, bu yüzden telefonun tanıyıcısı kullanılıyor.",
+  "Checking…": "Kontrol ediliyor…",
+  "Checking your recitation…": "Tilavetiniz kontrol ediliyor…"
 }

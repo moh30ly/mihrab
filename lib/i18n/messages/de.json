@@ -735,5 +735,7 @@
   "Quran recitation checker": "Koran-Rezitationsprüfer",
   "Hears your recitation on the phone, without Google or a connection": "Hört deine Rezitation auf dem Handy, ohne Google und ohne Verbindung",
   "Loading the Quran recitation checker…": "Der Rezitationsprüfer wird geladen…",
-  "It could not start on this phone, so the phone’s recogniser is used instead.": "Er konnte auf diesem Handy nicht starten, daher wird die Spracherkennung des Handys verwendet."
+  "It could not start on this phone, so the phone’s recogniser is used instead.": "Er konnte auf diesem Handy nicht starten, daher wird die Spracherkennung des Handys verwendet.",
+  "Checking…": "Wird geprüft…",
+  "Checking your recitation…": "Deine Rezitation wird geprüft…"
 }

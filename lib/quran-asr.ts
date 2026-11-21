@@ -253,7 +253,7 @@ export function listenQuran(h: ListenHandlers): Listening {
     }
     if (stopped) {
       const seconds = all.reduce((n, c) => n + c.length, 0) / RATE + all.length * 0.3
-      if (!wholeDone && all.length > 1 && seconds <= MAX_WHOLE) {
+      if (!wholeDone && all.length > 1 && seconds <= MAX_WHOLE && (h.recheck?.(committed) ?? true)) {
         wholeDone = true
         busy = true
         const gap = new Float32Array(Math.round(RATE * 0.3))
@@ -361,6 +361,10 @@ export function listenQuran(h: ListenHandlers): Listening {
     stop: () => {
       if (stopped) return
       stopped = true
+      // Free the microphone at once; what is left is the model finishing what it heard.
+      node?.disconnect()
+      stream?.getTracks().forEach((t) => t.stop())
+      h.onStatus?.({ phase: "checking" })
       if (voiced) endStretch()
       void pump()
     },

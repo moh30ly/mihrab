@@ -735,5 +735,7 @@
   "Quran recitation checker": "古兰经诵读检查器",
   "Hears your recitation on the phone, without Google or a connection": "在手机上聆听你的诵读，无需 Google 或网络",
   "Loading the Quran recitation checker…": "正在加载诵读检查器…",
-  "It could not start on this phone, so the phone’s recogniser is used instead.": "无法在此手机上启动，因此改用手机自带的语音识别。"
+  "It could not start on this phone, so the phone’s recogniser is used instead.": "无法在此手机上启动，因此改用手机自带的语音识别。",
+  "Checking…": "正在检查…",
+  "Checking your recitation…": "正在检查你的诵读…"
 }

@@ -735,5 +735,7 @@
   "Quran recitation checker": "مصحّح التلاوة",
   "Hears your recitation on the phone, without Google or a connection": "يسمع تلاوتك على الهاتف دون Google ودون اتصال",
   "Loading the Quran recitation checker…": "جارٍ تحميل مصحّح التلاوة…",
-  "It could not start on this phone, so the phone’s recogniser is used instead.": "تعذّر تشغيله على هذا الهاتف، لذا يُستخدم مُتعرِّف الهاتف بدلًا منه."
+  "It could not start on this phone, so the phone’s recogniser is used instead.": "تعذّر تشغيله على هذا الهاتف، لذا يُستخدم مُتعرِّف الهاتف بدلًا منه.",
+  "Checking…": "جارٍ التحقق…",
+  "Checking your recitation…": "جارٍ التحقق من تلاوتك…"
 }
