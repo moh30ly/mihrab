@@ -21,7 +21,7 @@ export function Guide() {
         </div>
         <footer className="border-t border-border pt-6 text-sm leading-6 text-muted-foreground">
           <p>
-            Prayer times are calculated with the Adhan library. City names and coordinates are from GeoNames, used under Creative Commons Attribution 4.0. The Quran text is the King Fahd Complex Uthmani script via quranenc.com, with the Saheeh International meaning via Tanzil.net. Your position is read by the browser and stays on this device. Read the{" "}
+            Prayer times are calculated with the Adhan library. City names and coordinates are from GeoNames, used under Creative Commons Attribution 4.0. The Quran text is the King Fahd Complex Uthmani script via quranenc.com, with the Saheeh International meaning via Tanzil.net. The athkar, duas and sibha recordings are Hisn al-Muslim read by Hamad Al-Duraihim, from hisnmuslim.com and IslamHouse. Your position is read by the browser and stays on this device. Read the{" "}
             <a className="underline underline-offset-2" href="/privacy/">
               privacy policy
             </a>
