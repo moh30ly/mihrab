@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Check, ChevronLeft, ChevronRight, Eye, Keyboard, Lightbulb, Loader2, Mic, RotateCcw, Square, Volume2 } from "lucide-react"
 import { RecordTake } from "@/components/hifz/record-take"
 import { saveTake } from "@/lib/recordings"
+import { donateTake } from "@/lib/donate"
+import { DonateAsk, DonateRecordings } from "@/components/hifz/donate-recordings"
 import { readLastSession, saveLastSession, useHifzProgress } from "@/components/hifz/use-hifz"
 import {
   HIDE_LEVELS,
@@ -95,6 +97,8 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
   const [playing, setPlaying] = useState(false)
   const [voiceError, setVoiceError] = useState(false)
   const listening = useRef<Listening | null>(null)
+  // What Mihrab's checker recorded on this try, shared after the check if the person opted in.
+  const takeAudio = useRef<Blob | null>(null)
   const playRun = useRef(0)
   const [reciter, setReciterState] = useState<string>(() => reciterById(null).id)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -198,6 +202,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     setPeeked(new Set())
     setPeekedThisTry(false)
     setListenError(null)
+    takeAudio.current = null
   }
 
   const goTo = (n: number) => {
@@ -227,6 +232,18 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
     )
     setResult(cmp)
     setMode("result")
+    if (takeAudio.current && shown.length) {
+      void donateTake({
+        blob: takeAudio.current,
+        surah: surahId,
+        ayahFrom: shown[0].number,
+        ayahTo: shown[shown.length - 1].number,
+        heard: said,
+        score: cmp.score,
+        statuses: cmp.words.map((w) => w.status),
+      })
+      takeAudio.current = null
+    }
     // Peeking during the try means it was not fully from memory.
     const level: HideLevel = peekedRef.current ? (Math.min(prefs.level, 2) as HideLevel) : prefs.level
     updateProgress((p) => {
@@ -262,6 +279,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
       recheck: (text) => compareRecitation(words.map((w) => w.text), text, { openings }).score < 1,
       // Mihrab's own checker keeps what it heard: it becomes this ayah's recording.
       onAudio: (blob) => {
+        takeAudio.current = blob
         void saveTake(takeKey, blob).then(() => setTakeVersion((v) => v + 1))
       },
       onEnd: (error, detail) => {
@@ -881,6 +899,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
           </div>
         </section>
       ) : null}
+      {mode === "result" ? <DonateAsk /> : null}
 
       {/* Moving between ayahs */}
       {prefs.scope === "ayah" ? (
@@ -905,6 +924,8 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
         </nav>
       ) : null}
 
+      <DonateRecordings />
+
       <details className="text-sm text-muted-foreground">
         <summary className="cursor-pointer">{t("How the checker works")}</summary>
         <div className="mt-2 grid gap-2 leading-6">
@@ -915,7 +936,7 @@ export function HifzSession({ surahId, verses }: { surahId: number; verses: Vers
             {t("It checks the words, not tajweed: it can’t judge elongation, nasalisation or how letters are pronounced. Recognition can also mishear a word now and then, so treat it as a helper alongside a teacher.")}
           </p>
           <p>
-            {t("Depending on your device, the speech service may send the audio to its provider (such as Google) to recognise it. Mihrab doesn’t keep any audio; only your score for each ayah is saved on this device.")}
+            {t("Depending on your device, the speech service may send the audio to its provider (such as Google) to recognise it. Mihrab’s own checker works on this device, and your last recording of each ayah stays here unless you choose to share your recitations above.")}
           </p>
         </div>
       </details>

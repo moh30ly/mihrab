@@ -80,13 +80,15 @@ class Writer:
         self.count = 0
 
     def add(self, *, id: str, audio: np.ndarray, surah: int, ayah: int, label: str, speaker: str,
-            source: str, gender: str = "", split: str | None = None) -> None:
+            source: str, gender: str = "", split: str | None = None, ayah_to: int | None = None) -> None:
         if len(audio) < RATE * 0.5:
             return
         rel = f"audio/{id}.wav"
         write_wav(self.out / rel, audio)
+        last = ayah_to or ayah
+        text = " ".join(q.ayahs()[(surah, a)] for a in range(ayah, last + 1))
         row = {
-            "id": id, "audio": rel, "surah": surah, "ayah": ayah, "text": q.ayahs()[(surah, ayah)],
+            "id": id, "audio": rel, "surah": surah, "ayah": ayah, "ayah_to": last, "text": text,
             "label": label, "speaker": speaker, "gender": gender, "source": source,
             "split": split or split_for(speaker, self.test_share), "seconds": round(len(audio) / RATE, 2),
         }
@@ -177,14 +179,16 @@ def add_folder(w: Writer, folder: Path) -> None:
     for path in sorted(folder.rglob("*")):
         if path.suffix.lower() not in AUDIO_EXT:
             continue
-        m = re.match(r"(\d{3})(\d{3})", path.stem)
-        if not m or (int(m[1]), int(m[2])) not in q.ayahs():
-            print(f"skip {path}: name must start with the surah and ayah, e.g. 001002")
+        # 001002 for one ayah, 001002-001004 for a range within a surah.
+        m = re.match(r"(\d{3})(\d{3})(?:-(\d{3})(\d{3}))?", path.stem)
+        last = int(m[4]) if m and m[4] else None
+        if not m or (int(m[1]), int(m[2])) not in q.ayahs() or (last and (int(m[3]) != int(m[1]) or (int(m[1]), last) not in q.ayahs())):
+            print(f"skip {path}: name must start with the surah and ayah, e.g. 001002 or 001002-001004")
             continue
         rel = str(path.relative_to(folder))
         speaker = path.parent.name if path.parent != folder else "unknown"
         clean = re.sub(r"[^A-Za-z0-9_-]", "_", rel.rsplit(".", 1)[0])
-        w.add(id=f"own-{clean}", audio=decode(path.read_bytes()), surah=int(m[1]), ayah=int(m[2]),
+        w.add(id=f"own-{clean}", audio=decode(path.read_bytes()), surah=int(m[1]), ayah=int(m[2]), ayah_to=last,
               label=labels.get(rel, "unknown"), speaker=f"own-{speaker}", source="own")
 
 

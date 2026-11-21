@@ -33,7 +33,7 @@ const limit = Number(opt("--limit") ?? 0)
 const jsonOut = opt("--json")
 const [dataDir, ...modelDirs] = argv
 
-type Clip = { id: string; audio: string; surah: number; ayah: number; label: string; source: string; speaker: string; split: string; seconds: number }
+type Clip = { id: string; audio: string; surah: number; ayah: number; ayah_to?: number; label: string; source: string; speaker: string; split: string; seconds: number }
 let clips = fs
   .readFileSync(path.join(dataDir, "manifest.jsonl"), "utf8")
   .split("\n")
@@ -49,6 +49,13 @@ function ayahText(surah: number, ayah: number): string {
     surahs.set(surah, raw.verses.map((v) => v[0]))
   }
   return surahs.get(surah)![ayah - 1]
+}
+
+/** The expected text of a clip: one ayah or a range in one surah. */
+function clipText(c: { surah: number; ayah: number; ayah_to?: number }): string {
+  const out: string[] = []
+  for (let a = c.ayah; a <= (c.ayah_to ?? c.ayah); a++) out.push(ayahText(c.surah, a))
+  return out.join(" ")
 }
 
 /** 16-bit PCM WAV -> float32. */
@@ -125,7 +132,7 @@ for (const dir of modelDirs) {
     const out = await asr(padded, { language: "arabic", task: "transcribe", max_new_tokens: 200, chunk_length_s: long ? 30 : undefined, stride_length_s: long ? 5 : undefined } as never)
     const ms = performance.now() - t0
     const heard = (Array.isArray(out) ? out.map((o) => o.text).join(" ") : (out as { text: string }).text).trim()
-    const expected = arabicWords(ayahText(c.surah, c.ayah))
+    const expected = arabicWords(clipText(c))
     const plain = compareRecitation(expected, heard)
     const row: Row = { model: name, id: c.id, source: c.source, label: c.label, seconds: c.seconds, ms, heard, score: plain.score }
     // Not the first word: the opening letters of some surahs are matched specially.
@@ -171,11 +178,11 @@ if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_S
 console.log("\nWorst correct clips:")
 for (const r of rows.filter((r) => r.label === "correct").sort((a, b) => a.score - b.score).slice(0, 25)) {
   const c = clips.find((x) => x.id === r.id)!
-  console.log(`${(r.score * 100).toFixed(0)}% ${r.model} ${r.id} (${c.surah}:${c.ayah})\n  expected: ${ayahText(c.surah, c.ayah)}\n  heard:    ${r.heard}`)
+  console.log(`${(r.score * 100).toFixed(0)}% ${r.model} ${r.id} (${c.surah}:${c.ayah})\n  expected: ${clipText(c)}\n  heard:    ${r.heard}`)
 }
 console.log("\nIncorrect clips the checker passed:")
 for (const r of rows.filter((r) => r.label === "incorrect" && r.score === 1).slice(0, 15)) {
   const c = clips.find((x) => x.id === r.id)!
-  console.log(`${r.model} ${r.id} (${c.surah}:${c.ayah})\n  expected: ${ayahText(c.surah, c.ayah)}\n  heard:    ${r.heard}`)
+  console.log(`${r.model} ${r.id} (${c.surah}:${c.ayah})\n  expected: ${clipText(c)}\n  heard:    ${r.heard}`)
 }
 if (jsonOut) fs.writeFileSync(jsonOut, JSON.stringify(rows, null, 1))
