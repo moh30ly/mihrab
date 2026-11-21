@@ -104,6 +104,25 @@ public class SpeechPlugin extends Plugin {
         call.resolve(ret);
     }
 
+    /** Asks for the microphone up front (on opening the memorisation page), so Recite and Record just work. */
+    @PluginMethod
+    public void requestMic(PluginCall call) {
+        if (getPermissionState("microphone") == PermissionState.GRANTED) {
+            JSObject ret = new JSObject();
+            ret.put("granted", true);
+            call.resolve(ret);
+            return;
+        }
+        requestPermissionForAlias("microphone", call, "afterMic");
+    }
+
+    @PermissionCallback
+    private void afterMic(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("granted", getPermissionState("microphone") == PermissionState.GRANTED);
+        call.resolve(ret);
+    }
+
     @PluginMethod
     public void start(PluginCall call) {
         if (!serviceAvailable()) {
@@ -143,10 +162,13 @@ public class SpeechPlugin extends Plugin {
             try {
                 destroy();
                 boolean bindable = SpeechRecognizer.isRecognitionAvailable(getContext());
+                String engine;
                 if ((offline || !bindable) && Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(getContext())) {
                     recognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(getContext());
+                    engine = "on-device";
                 } else {
                     recognizer = SpeechRecognizer.createSpeechRecognizer(getContext());
+                    engine = "service";
                 }
                 recognizer.setRecognitionListener(new Listener());
                 Intent intent = recognizerIntent(lang);
@@ -154,12 +176,12 @@ public class SpeechPlugin extends Plugin {
                 intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
                 intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
                 intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getContext().getPackageName());
-                // Reciters pause between ayahs; ask the engine to wait (some ignore this).
-                intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 4000L);
-                intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 4000L);
-                intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 60000L);
+                // No silence or minimum-length extras: some versions of Google's recogniser return
+                // nothing at all when they are set. A pause ends a session and the web side starts the next.
                 recognizer.startListening(intent);
-                call.resolve();
+                JSObject ret = new JSObject();
+                ret.put("engine", engine);
+                call.resolve(ret);
             } catch (Exception e) {
                 call.reject(e.getMessage(), "start");
             }
@@ -346,13 +368,31 @@ public class SpeechPlugin extends Plugin {
         }
 
         @Override
-        public void onReadyForSpeech(Bundle params) {}
+        public void onReadyForSpeech(Bundle params) {
+            JSObject data = new JSObject();
+            data.put("phase", "ready");
+            notifyListeners("status", data);
+        }
 
         @Override
-        public void onBeginningOfSpeech() {}
+        public void onBeginningOfSpeech() {
+            JSObject data = new JSObject();
+            data.put("phase", "speech");
+            notifyListeners("status", data);
+        }
 
+        private long lastLevel = 0;
+
+        /** The microphone level, so the page can show that it hears the person (about 8 times a second). */
         @Override
-        public void onRmsChanged(float rmsdB) {}
+        public void onRmsChanged(float rmsdB) {
+            long now = System.currentTimeMillis();
+            if (now - lastLevel < 120) return;
+            lastLevel = now;
+            JSObject data = new JSObject();
+            data.put("level", rmsdB);
+            notifyListeners("level", data);
+        }
 
         @Override
         public void onBufferReceived(byte[] buffer) {}

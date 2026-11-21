@@ -7,6 +7,7 @@ import { formatBytes, useCanDownload, useOfflineState, useOnline } from "@/compo
 import { HADITH_COLLECTIONS } from "@/lib/hadith"
 import { isBundled } from "@/lib/library"
 import { downloadSpeechModel, offlineSpeechModel, type OfflineModel } from "@/lib/listen"
+import { probeQuranAsr, quranAsrError } from "@/lib/quran-asr"
 import {
   audioPack,
   audioSize,
@@ -242,6 +243,27 @@ function Recitations() {
 }
 
 /** Whether the phone can check a recitation without a connection, with a button to download Arabic. */
+/** Mihrab's own recitation checker (lib/quran-asr.ts), which comes with the app. */
+export function QuranChecker() {
+  const { t } = useT()
+  const [included, setIncluded] = useState(false)
+  useEffect(() => {
+    void probeQuranAsr().then(setIncluded)
+  }, [])
+  if (!included) return null
+  const error = quranAsrError()
+  return (
+    <div className="mt-3 flex items-start gap-3">
+      <CircleCheck className="mt-0.5 size-4 shrink-0 text-grove" aria-hidden />
+      <div className="min-w-0 flex-1 text-sm leading-6">
+        <p className="font-medium text-ink">{t("Quran recitation checker")}</p>
+        <p className="text-muted-foreground">{t("Hears your recitation on the phone, without Google or a connection")}</p>
+        {error ? <p className="text-xs text-[#b4472c]">{t("It could not start on this phone, so the phone’s recogniser is used instead.")} ({error})</p> : null}
+      </div>
+    </div>
+  )
+}
+
 export function SpeechModel() {
   const { t } = useT()
   const online = useOnline()
@@ -366,6 +388,7 @@ export function Downloads() {
             <BookList kind="hadith" books={hadith} sizes={sizes} />
           </Section>
           <Section title={t("Memorize")} note={t("Listen plays the recitations you downloaded above. Without them, the phone’s own voice reads the ayah.")}>
+            <QuranChecker />
             <SpeechModel />
           </Section>
         </>

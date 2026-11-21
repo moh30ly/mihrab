@@ -89,3 +89,7 @@ test("long ayahs compare quickly", () => {
   assert.ok(r.score > 0.95, String(r.score))
   assert.ok(performance.now() - start < 500)
 })
+
+test("a wrong word turns red as soon as it is heard", () => {
+  assert.deepEqual(statuses(ayah(1, 2), "الحمد للناس", true), ["correct", "wrong", "pending", "pending"])
+})

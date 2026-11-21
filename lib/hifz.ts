@@ -121,6 +121,9 @@ export function compareRecitation(
   // Recitations stay close to the text, so only a band around the diagonal is searched;
   // that keeps a whole surah fast enough to re-check while someone is still reciting.
   const band = 60 + Math.max(0, m - n)
+  // Mid-recitation the words not reached yet are free, so a wrong last word must cost less
+  // than calling it extra, or it would only turn red once the next word is heard.
+  const subCost = partial ? 0.9 : 1.5
   for (let i = 0; i <= n; i++) {
     for (let j = Math.max(0, i - band); j <= Math.min(m, i + band); j++) {
       const c = cost[i][j]
@@ -140,7 +143,7 @@ export function compareRecitation(
           joined += hs[j + k - 1]
           const sim = Math.max(...exp[i].map((f) => similarity(f, joined)))
           if (sim >= CLOSE) relax(i + 1, j + k, 2 * (1 - sim) + (k - 1) * 0.05, { kind: "match", take: k, sim })
-          else if (k === 1) relax(i + 1, j + 1, 1.5, { kind: "sub", take: 1, sim })
+          else if (k === 1) relax(i + 1, j + 1, subCost, { kind: "sub", take: 1, sim })
         }
       }
     }

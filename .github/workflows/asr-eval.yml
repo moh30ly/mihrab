@@ -1,0 +1,39 @@
+name: Recitation checker accuracy
+
+# Scores the offline recitation checker (models from the quran-asr-v1 release, matching from
+# lib/hifz.ts) on correct recitations by several reciters, clean and with phone-like noise.
+# Every word should be marked right, so anything less is the checker's error.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: [scripts/eval-asr.mts, scripts/fetch-asr-model.mjs, lib/hifz.ts, .github/workflows/asr-eval.yml]
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: |
+          node scripts/fetch-asr-model.mjs m-tiny tiny
+          node scripts/fetch-asr-model.mjs m-base base
+          mv m-tiny/models/quran-asr models-tiny && mv m-base/models/quran-asr models-base
+      - name: Recitations
+        run: |
+          command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg)
+          mkdir -p clips raw
+          for r in Alafasy_128kbps Husary_64kbps Minshawy_Murattal_128kbps Abdul_Basit_Murattal_64kbps Ghamadi_40kbps; do
+            for a in 001001 001002 001004 001005 001006 001007 112001 112002 112003 112004 036001 036002 067001 067002 002002 002003 078001 078002 103001 103002 103003; do
+              curl -sSfL -o raw/$r.$a.mp3 https://everyayah.com/data/$r/$a.mp3 || continue
+              ffmpeg -loglevel error -i raw/$r.$a.mp3 -ac 1 -ar 16000 -f f32le clips/${r}__${a}__clean.pcm
+              # A phone in a room: narrow band, some background noise.
+              ffmpeg -loglevel error -i raw/$r.$a.mp3 -f lavfi -i "anoisesrc=color=pink:amplitude=0.03:sample_rate=16000" -filter_complex "[0]aresample=16000,highpass=f=200,lowpass=f=3800,volume=0.7[a];[a][1]amix=inputs=2:duration=first:normalize=0" -ac 1 -ar 16000 -f f32le clips/${r}__${a}__phone.pcm
+            done
+          done
+          ls clips | wc -l
+      - run: npx tsx scripts/eval-asr.mts clips models-tiny models-base

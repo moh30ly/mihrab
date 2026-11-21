@@ -1,0 +1,87 @@
+name: Quran recitation model
+
+# Builds the offline Quran recitation checker (scripts/build-asr-model.py) and publishes it
+# as the assets of the "quran-asr-v1" release. The Android app downloads it from there on
+# demand (Offline page), and the website copies it into /models/quran-asr/ (pages.yml).
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: [lib/asr-worker.ts, scripts/build-asr-model.py, scripts/check-asr-model.mjs, .github/workflows/asr-model.yml]
+  push:
+    branches: [main]
+    paths: [lib/asr-worker.ts, scripts/build-asr-model.py, scripts/check-asr-model.mjs, .github/workflows/asr-model.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: asr-model
+  cancel-in-progress: true
+
+env:
+  TAG: quran-asr-v1
+
+jobs:
+  model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install exporters
+        run: |
+          # One install, so nothing upgrades torch past the version Optimum's exporter supports.
+          # Transformers before 4.42: later Whisper decoders take a cache_position input that
+          # Transformers.js doesn't give.
+          pip install --extra-index-url https://download.pytorch.org/whl/cpu "torch==2.4.1" "optimum[exporters]==1.20.0" "transformers==4.41.2" "onnx==1.16.2" "onnxruntime==1.18.1" "numpy<2"
+          python -c "import torch; print('torch', torch.__version__)"
+      - run: python scripts/build-asr-model.py quran-asr
+      # The smaller model (about 3 times faster, slightly less accurate), for slower phones.
+      - run: python scripts/build-asr-model.py quran-asr-tiny tarteel-ai/whisper-tiny-ar-quran
+      # The ONNX runtime the page runs it with, so the app needs nothing from a CDN.
+      - run: npm ci
+      # Al-Fatihah 1:2, Al-Ikhlas 112:1 and Al-Baqarah 2:2, as recited by Mishary Alafasy.
+      - name: Check the model on real recitations
+        run: |
+          command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg)
+          mkdir -p clips
+          for a in 001002 112001 002002; do
+            curl -sSfL -o clips/$a.mp3 https://everyayah.com/data/Alafasy_128kbps/$a.mp3
+            ffmpeg -loglevel error -i clips/$a.mp3 -ac 1 -ar 16000 -f f32le clips/$a.pcm
+            ffmpeg -loglevel error -i clips/$a.mp3 -ac 1 -ar 48000 clips/$a.wav
+          done
+          node scripts/check-asr-model.mjs quran-asr clips/*.pcm
+          node scripts/check-asr-model.mjs quran-asr-tiny clips/*.pcm
+      - run: |
+          mkdir -p quran-asr/ort
+          cp node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.mjs node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.wasm quran-asr/ort/
+          # The worker the app runs the model in (lib/asr-worker.ts), with Transformers.js inside.
+          npx esbuild lib/asr-worker.ts --bundle --format=esm --platform=browser --target=es2022 --minify --outfile=quran-asr/worker.js
+          node -e "const fs=require('fs');const p='quran-asr/files.json';const s=JSON.parse(fs.readFileSync(p));for(const f of ['ort/ort-wasm-simd-threaded.jsep.mjs','ort/ort-wasm-simd-threaded.jsep.wasm','worker.js'])s[f]=fs.statSync('quran-asr/'+f).size;fs.writeFileSync(p,JSON.stringify(s,null,2))"
+          cat quran-asr/files.json
+      # Release assets are flat, so "onnx/encoder_model_quantized.onnx" becomes "onnx.encoder_model_quantized.onnx".
+      - name: Publish release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p assets
+          (cd quran-asr && find . -type f | sed 's|^\./||' | while read f; do cp "$f" "../assets/$(echo "$f" | tr '/' '.')"; done)
+          (cd quran-asr-tiny && find . -type f | sed 's|^\./||' | while read f; do cp "$f" "../assets/tiny.$(echo "$f" | tr '/' '.')"; done)
+          ls -la assets
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "Quran recitation checker model" --notes "Tarteel's whisper-base-ar-quran (Apache-2.0), exported to ONNX and quantised for Mihrab's offline recitation checker. Built by .github/workflows/asr-model.yml." --latest=false
+          gh release upload "$TAG" assets/* --clobber
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quran-asr
+          path: quran-asr
+      # The recitations it was checked on, for trying the app's listening end to end.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quran-asr-clips
+          path: clips/*.wav
